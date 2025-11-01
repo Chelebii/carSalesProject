@@ -44,6 +44,7 @@ int main(void)
         sscanf(customerNames, "%s", firstName); // read first word from the string, till ' '
         // sscanf = string scanf (reads from a string, not from keyboard)
 
+        customerNames[0] = toupper(customerNames[0]);
         firstName[0] = toupper(firstName[0]); // convert first character to uppercase
 
         for (int i = 1; i < strlen(firstName); i++) // this for loop makes rest of the letters lower
