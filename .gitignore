@@ -1,0 +1,10 @@
+# CLion / CMake / build and IDE files
+cmake-build-*/
+.idea/
+*.o
+*.obj
+*.exe
+*.out
+CMakeCache.txt
+CMakeFiles/
+*.log
