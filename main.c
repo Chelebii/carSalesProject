@@ -135,8 +135,8 @@ int main(void)
 
                 totalSold += carsWanted; // Total how many cars sold
                 totalIncome += totalPrice; // Total generated income
-                totalMadeDiscount = (carsWanted * CARPRICE) - (totalPrice);
-                totalDiscountGiven += totalMadeDiscount; //
+                discountThisSale = (carsWanted * CARPRICE) - (totalPrice); //  given discount just for this sale
+                totalDiscountGiven += discountThisSale; // add this sale's discount to total discount
 
                 break; // after buying completed goes back to menu
             }
