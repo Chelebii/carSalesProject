@@ -24,13 +24,18 @@ int main(void)
     char membership, currentCustomer[101];
     char customerNames[MAX_SALES][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
 
+    system("color 0E"); // black background, yellow text
 
     do // at least will work one time. condition is MENU_OPTION_EXIT
     {
+
         system("cls"); //clear screen
-        printf("\n---------------------------------------");
-        printf("\nWelcome to Chelebi's Garage\n");
-        printf("---------------------------------------\n");
+
+        printf("\n========================================\n");
+        printf("     WELCOME TO CHELEBI'S GARAGE  \n");
+        printf("========================================\n");
+        printf("      Quality Cars. Fair Deals.\n");
+        printf("========================================\n\n");
 
         printf("Please enter your name: ");
         scanf("  %100[^\n]", currentCustomer); // reads up to 100 characters what the user types until Enter, but does not take the Enter key
