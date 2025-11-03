@@ -108,6 +108,7 @@ int main(void)
             printf("Do you have a membership card (Y/N):");
             scanf(" %c", &membership);
             while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
+            system("cls");
 
             if (membership == 'Y' || membership == 'y')
             {
@@ -115,10 +116,9 @@ int main(void)
             }
             else
             {
+                printf("No membership discount given!!!\n");
                 hasMembership = FALSE;
             }
-
-            system("cls");
 
             //check discount and update and sale happens here
             if (userAge >= DISCOUNT_MIN_AGE && userAge <= DISCOUNT_MAX_AGE)
