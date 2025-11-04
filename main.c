@@ -51,10 +51,10 @@ int main(void)
 
         system("cls");
 
-        printf("\n1. Cars on Sale\n");
+        printf("1. View Cars on Sale\n");
         printf("2. Buy a Car\n");
-        printf("3. Sale Stats\n");
-        printf("4. Exit\n");
+        printf("3. View Sales Statistics\n");
+        printf("4. Exit Program\n");
         printf("\nChoose an option from menu %s: ", currentCustomer);
         scanf("%hu", &menuOption);
         while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
@@ -71,24 +71,28 @@ int main(void)
 
             if (carsAvailable == 0)
             {
-                printf("Sorry, all cars are sold out\n");
+                printf("\nSorry, %s — all cars are sold out at the moment!\n", currentCustomer);
+                printf("Please check back later when we restock.\n");
                 break; // goes back to menu
             }
 
-            printf("\nThere are %hu cars available, each car costs %d GBP\n", carsAvailable,CARPRICE);
+            printf("\nCurrently, we have %hu cars available.\n", carsAvailable);
+            printf("Each car costs %d GBP.\n", CARPRICE);
+
             printf("\nHow many cars would you like to buy %s?", currentCustomer);
             scanf("%hu", &carsWanted);
             while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
 
-            //check are there enough cars
+            // Check stock
             if (carsWanted > carsAvailable)
             {
-                printf("There are fewer cars in the Garage than you need\n");
+                printf("\nSorry, we only have %hu cars left in the Garage.\n", carsAvailable);
+                printf("Please enter a smaller number.\n");
                 break;
             }
             else if (carsWanted == 0)
             {
-                printf("You need to enter a number greater than 0\n");
+                printf("\nYou need to choose at least 1 car to proceed.\n");
                 break;
             }
 
@@ -98,14 +102,14 @@ int main(void)
 
             if (userAge < 18)
             {
-                printf("Sorry, %s you can't buy a car!!!\n", currentCustomer);
+                printf("\nSorry %s, you must be at least 18 years old to buy a car.\n", currentCustomer);
                 break;
             }
 
             totalPrice = carsWanted * CARPRICE;
 
 
-            printf("Do you have a membership card (Y/N):");
+            printf("\nDo you have a Chelebi Garage membership card? (Y/N): ");
             scanf(" %c", &membership);
             while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
             system("cls");
@@ -113,27 +117,27 @@ int main(void)
             if (membership == 'Y' || membership == 'y')
             {
                 hasMembership = TRUE;
+                printf("\nMembership confirmed \n");
             }
             else
             {
-                printf("No membership discount given!!!\n");
                 hasMembership = FALSE;
             }
 
             //check discount and update and sale happens here
             if (userAge >= DISCOUNT_MIN_AGE && userAge <= DISCOUNT_MAX_AGE)
             {
-                printf("You are eligible for %%20 age discount\n");
+                printf("Great news %s, You get a 20%% age discount.\n", currentCustomer);
                 totalPrice *= DISCOUNT_20; // gives %20 by = *0.8
                 if (hasMembership == TRUE)
                 {
-                    printf("Your membership gives you an extra %%10 discount.\n");
+                    printf("Plus, your Chelebi Garage membership gives you an extra 10%% discount.\n");
                     totalPrice *= EXTRA10; // gives extra %10 =*0.9
                 }
-                printf("%s, You need to pay %.2f GBP\n", currentCustomer, totalPrice);
+                printf("Final price after discounts: %.2f GBP\n", currentCustomer, totalPrice);
 
                 carsAvailable -= carsWanted;
-                printf("There are %hu cars left\n", carsAvailable);
+                printf("Cars left in stock: %hu\n", carsAvailable);
 
                 totalSold += carsWanted; // Total how many cars sold
                 totalIncome += totalPrice; // Total generated income
@@ -148,20 +152,22 @@ int main(void)
 
             else if (hasMembership == TRUE)
             {
-                printf("You get an extra %%10 membership discount.\n");
+                printf("Thank you for being a Chelebi Garage member, %s.\n", currentCustomer);
+                printf("You get a 10%% membership discount on your purchase.\n");
                 totalPrice *= EXTRA10;
-                printf("You need to pay %0.2f GBP\n", totalPrice);
+                printf("Final price after membership discount: %.2f GBP\n", totalPrice);
             }
 
             else
             {
                 totalPrice = carsWanted * CARPRICE;
-                printf("You need to pay %0.2f GBP\n", totalPrice);
+                printf("No discount applied for this purchase.\n");
+                printf("Total price: %.2f GBP\n", totalPrice);
             }
 
             carsAvailable -= carsWanted;
-            printf("There are %hu cars left\n", carsAvailable);
-            totalSold += carsWanted; // total how many cars sold. this code calculates
+            printf("Cars left in stock: %hu\n", carsAvailable);
+            totalSold += carsWanted; // Total how many cars sold.
             totalIncome += totalPrice; // Total generated income
             discountThisSale = (carsWanted * CARPRICE) - (totalPrice);
             totalDiscountGiven += discountThisSale;
