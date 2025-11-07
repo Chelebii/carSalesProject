@@ -51,7 +51,7 @@ int main(void)
         printf("     WELCOME TO CHELEBI'S GARAGE  \n");
         printf("========================================\n");
         printf("      Quality Cars. Fair Deals.\n");
-        printf("========================================\n\n");
+        printf("========================================\n");
 
         printf("Please enter your name: ");
         scanf(" %100[^\n]", currentCustomer.currentCustomerName);// reads up to 100 characters what the user types until Enter, but does not take the Enter key
@@ -122,7 +122,8 @@ int main(void)
                 if (currentCustomer.currentCustomerAge < 18)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n", currentCustomer.currentCustomerName);
-                    return 0;
+                    menuOption = MENU_OPTION_EXIT;
+                    break;
                 }
 
                 currentTotalPrice = carsWanted * CARPRICE;
@@ -166,15 +167,16 @@ int main(void)
                     strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);// copy currentCustomer text into the 2D array
                     statistics.numberOfSales++; // increase number of sales after each successful sale
 
-                    break; // after buying completed goes back to menu
+                    menuOption = MENU_OPTION_EXIT;// end the menu session for this customer
+                    break; // ends switch
                 }
 
                 else if (currentCustomer.currentCustomerIsMember == true)
                 {
                     printf("Thank you for being a Chelebi Garage member, %s.\n", currentCustomer.currentCustomerName);
-                    printf("You get a 10%% membership discount on your purchase.\n");
+                    printf("\nYou get a 10%% membership discount on your purchase.\n");
                     currentTotalPrice *= EXTRA10;
-                    printf("Final price after membership discount: %.2f GBP\n", currentTotalPrice);
+                    printf("\nFinal price after membership discount: %.2f GBP\n", currentTotalPrice);
                 }
 
                 else
@@ -194,7 +196,7 @@ int main(void)
                 strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
                 statistics.numberOfSales++;
 
-
+                menuOption = MENU_OPTION_EXIT;// end the menu session for this customer
                 break; // buying options finished
 
 
@@ -239,7 +241,7 @@ int main(void)
 
 
             printf(menuOption == MENU_OPTION_EXIT
-                       ? "\n\nPress Enter to Log out..."
+                       ? "\n\nPress Enter ..."
                        : "\n\nPress Enter to return to the Menu..."); // sonucu printf dondur demek,
             //(condition) ? expression_if_true : expression_if_false;
 
@@ -249,7 +251,6 @@ int main(void)
             system("cls");
         }
         while (menuOption != MENU_OPTION_EXIT);// loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
-
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
@@ -259,6 +260,7 @@ int main(void)
         {
             break;
         }
+
         system("cls");
     }
     while (1);
