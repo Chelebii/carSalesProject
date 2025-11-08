@@ -4,7 +4,6 @@
 #include <ctype.h> // toupper(), tolower()
 #include <stdbool.h>
 
-#define CARPRICE 1000
 #define DISCOUNT_MIN_AGE 20
 #define DISCOUNT_MAX_AGE 25
 #define EXTRA10 0.9f
@@ -143,9 +142,7 @@ int main(void)
                     }
                 printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
 
-
                 printf("\nWhich car would you like to buy %s?", currentCustomer.currentCustomerName);
-
                 bool validChoice = false;
 
                 do
@@ -155,23 +152,19 @@ int main(void)
 
                     if (selectedId < 1 || selectedId > MAX_SALES)
                     {
-                        printf("\nInvalid car ID. Please choose between 1 and 10: \n");
-                        continue;// goes to the start of the loop, skips rest
+                        printf("\nInvalid car ID. Please choose an available car ID: \n");
+                        continue; // goes to the start of the loop, skips rest
                     }
-                    do
+                    if (carsOnSale[selectedId - 1].carIsSold == true) //Check if that car is already sold
                     {
-                        if (carsOnSale[selectedId - 1].carIsSold == true) //Check if that car is already sold
-                        {
-                            printf("\nSorry, %s, this car is sold out!\n", currentCustomer.currentCustomerName);
-                            printf("Please choose another car ID: \n");
-                            scanf("%hu", &selectedId);
-                            while (getchar() != '\n');
-                        }
+                        printf("\nSorry, %s, this car is already sold!\n", currentCustomer.currentCustomerName);
+                        printf("Please choose another car: \n");
+                        continue; // goes to the start of the loop, skips rest
                     }
-                    while (carsOnSale[selectedId - 1].carIsSold == true);
                     validChoice = true;
                 }
-                while (validChoice == false);// if the user enters an invalid ID, it will ask again until a valid ID is entered
+                while (validChoice == false);
+                // if the user enters an invalid ID, it will ask again until a valid ID is entered
 
                 unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
                 printf("\nYou have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
