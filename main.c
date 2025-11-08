@@ -30,19 +30,38 @@ typedef struct
     float totalIncome;
     float totalDiscountGiven;
     char customerNames[MAX_SALES][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
-
 } Statistics;
+
+typedef struct
+{
+    char carModel[101];
+    unsigned short carYear;
+    float carPrice;
+    bool carIsSold;
+} Car;
 
 
 int main(void)
 {
-    unsigned short carsWanted = 0, menuOption = 0;
-    float  discountThisSale = 0.0, currentTotalPrice = 0.0;
+    unsigned short carsWanted = 1, menuOption = 0,selectedId = 0;
+    float discountThisSale = 0.0, currentTotalPrice = 0.0;
     char membership;
     bool validName;
 
     Customer currentCustomer = {0};
-    Statistics statistics ={.carsInStock = 10};
+    Statistics statistics = {.carsInStock = 10};
+    Car carsOnSale[MAX_SALES] = {
+        {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carIsSold = false},
+        {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carIsSold = false},
+        {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carIsSold = false},
+        {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carIsSold = false},
+        {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carIsSold = false},
+        {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carIsSold = false},
+        {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carIsSold = false},
+        {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carIsSold = false},
+        {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carIsSold = false},
+        {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carIsSold = false}
+    };
 
     system("color 0E"); // black background, yellow text
 
@@ -55,13 +74,14 @@ int main(void)
         printf("========================================\n");
 
         printf("Please enter your name: ");
-        scanf(" %100[^\n]", currentCustomer.currentCustomerName);// reads up to 100 characters what the user types until Enter, but does not take the Enter key
-        while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
+        scanf(" %100[^\n]", currentCustomer.currentCustomerName);
+        // reads up to 100 characters what the user types until Enter, but does not take the Enter key
+        while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
 
         do
         {
-            validName = true;// ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
-            for (int i=0; currentCustomer.currentCustomerName[i]; i++)
+            validName = true; // ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
+            for (int i = 0; currentCustomer.currentCustomerName[i]; i++)
             {
                 if (!isalpha(currentCustomer.currentCustomerName[i]))
                 {
@@ -71,11 +91,9 @@ int main(void)
                     validName = false;
                     break;
                 }
-
             }
         }
         while (validName == false);
-
 
 
         // Convert name to have first letter uppercase and rest lowercase
@@ -87,7 +105,6 @@ int main(void)
 
         do
         {
-
             system("cls");
 
             printf("1. View Cars on Sale\n");
@@ -103,7 +120,9 @@ int main(void)
             switch (menuOption)
             {
             case MENU_OPTION_CARS_ON_SALE:
-                printf("\nWorking on it\n");
+                for (unsigned short i = 0; i<MAX_SALES; i++)
+                    printf("%hu. %s, %hu, %.2f GBP, %s\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear, carsOnSale[i].carPrice ,carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
+                    printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
                 break; // it ends switch
 
             case MENU_OPTION_BUY_CAR: // Buying option codes are here
@@ -115,43 +134,49 @@ int main(void)
                     break; // goes back to menu
                 }
 
+                for (unsigned short i = 0; i<MAX_SALES; i++)
+                    printf("%hu. %s, %hu, %.2f GBP\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear, carsOnSale[i].carPrice);
                 printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
-                printf("Each car costs %d GBP.\n", CARPRICE);
 
-                printf("\nHow many cars would you like to buy %s?", currentCustomer.currentCustomerName);
-                scanf("%hu", &carsWanted);
-                while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
 
-                // Check stock
-                if (carsWanted > statistics.carsInStock)
+
+                printf("\nWhich car would you like to buy %s?", currentCustomer.currentCustomerName);
+                scanf("%hu", &selectedId);
+                while (getchar() != '\n');
+                // clear the buffer and removes all leftover characters including the Enter key
+                unsigned int index = selectedId - 1; // array index starts from 0, so we subtract 1
+
+                printf("\nYou have selected: %s, %hu\n",
+                       carsOnSale[index].carModel,
+                       carsOnSale[index].carYear);
+
+
+                if (selectedId < 1 || selectedId > MAX_SALES)
                 {
-                    printf("\nSorry, we only have %hu cars left in the Garage.\n", statistics.carsInStock);
-                    printf("Please enter a smaller number.\n");
-                    break;
-                }
-                else if (carsWanted == 0)
-                {
-                    printf("\nYou need to choose at least 1 car to proceed.\n");
+                    printf("\nInvalid car ID. Please choose between 1 and 10.\n");
                     break;
                 }
 
                 printf("How old are you %s? Age:", currentCustomer.currentCustomerName);
                 scanf("%hu", &currentCustomer.currentCustomerAge);
-                while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
+                while (getchar() != '\n');
+                // clear the buffer and removes all leftover characters including the Enter key
 
                 if (currentCustomer.currentCustomerAge < 18)
                 {
-                    printf("\nSorry %s, you must be at least 18 years old to buy a car.\n", currentCustomer.currentCustomerName);
+                    printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
+                           currentCustomer.currentCustomerName);
                     menuOption = MENU_OPTION_EXIT;
                     break;
                 }
 
-                currentTotalPrice = carsWanted * CARPRICE;
+                currentTotalPrice = carsOnSale[index].carPrice;
 
 
                 printf("\nDo you have a Chelebi Garage membership card? (Y/N): ");
                 scanf(" %c", &membership);
-                while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
+                while (getchar() != '\n');
+                // clear the buffer and removes all leftover characters including the Enter key
                 system("cls");
 
                 if (membership == 'Y' || membership == 'y')
@@ -165,7 +190,8 @@ int main(void)
                 }
 
                 //check discount and update and sale happens here
-                if (currentCustomer.currentCustomerAge >= DISCOUNT_MIN_AGE && currentCustomer.currentCustomerAge <= DISCOUNT_MAX_AGE)
+                if (currentCustomer.currentCustomerAge >= DISCOUNT_MIN_AGE && currentCustomer.currentCustomerAge <=
+                    DISCOUNT_MAX_AGE)
                 {
                     printf("Great news %s, You get a 20%% age discount.\n", currentCustomer.currentCustomerName);
                     currentTotalPrice *= DISCOUNT_20; // gives %20 by = *0.8
@@ -181,13 +207,14 @@ int main(void)
 
                     statistics.totalCarsSold += carsWanted; // Total how many cars sold
                     statistics.totalIncome += currentTotalPrice; // Total generated income
-                    discountThisSale = carsWanted * CARPRICE - currentTotalPrice; //  given discount just for this sale
+                    discountThisSale = carsOnSale[index].carPrice - currentTotalPrice; //  given discount just for this sale
                     statistics.totalDiscountGiven += discountThisSale; // add this sale's discount to total discount
 
-                    strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);// copy currentCustomer text into the 2D array
+                    strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
+                    // copy currentCustomer text into the 2D array
                     statistics.numberOfSales++; // increase number of sales after each successful sale
 
-                    menuOption = MENU_OPTION_EXIT;// end the menu session for this customer
+                    menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                     break; // ends switch
                 }
 
@@ -195,13 +222,14 @@ int main(void)
                 {
                     printf("Thank you for being a Chelebi Garage member, %s.\n", currentCustomer.currentCustomerName);
                     printf("\nYou get a 10%% membership discount on your purchase.\n");
+                    currentTotalPrice = carsOnSale[index].carPrice;
                     currentTotalPrice *= EXTRA10;
                     printf("\nFinal price after membership discount: %.2f GBP\n", currentTotalPrice);
                 }
 
                 else
                 {
-                    currentTotalPrice = carsWanted * CARPRICE;
+                    currentTotalPrice = carsOnSale[index].carPrice;
                     printf("No discount applied for this purchase.\n");
                     printf("Total price: %.2f GBP\n", currentTotalPrice);
                 }
@@ -210,13 +238,13 @@ int main(void)
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
                 statistics.totalCarsSold += carsWanted; // Total how many cars sold.
                 statistics.totalIncome += currentTotalPrice; // Total generated income
-                discountThisSale = carsWanted * CARPRICE - currentTotalPrice;
+                discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                 statistics.totalDiscountGiven += discountThisSale;
 
                 strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
                 statistics.numberOfSales++;
 
-                menuOption = MENU_OPTION_EXIT;// end the menu session for this customer
+                menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                 break; // buying options finished
 
 
@@ -229,7 +257,8 @@ int main(void)
 
                 if (statistics.totalCarsSold > 0) // Prevent division by zero when there are no sales
                 {
-                    printf("Average discount per car  : %.2f GBP\n", statistics.totalDiscountGiven / statistics.totalCarsSold);
+                    printf("Average discount per car  : %.2f GBP\n",
+                           statistics.totalDiscountGiven / statistics.totalCarsSold);
                     printf("Average income  per car   : %.2f GBP\n", statistics.totalIncome / statistics.totalCarsSold);
                 }
                 else
@@ -270,7 +299,8 @@ int main(void)
             getchar(); // waits an entry from user
             system("cls");
         }
-        while (menuOption != MENU_OPTION_EXIT);// loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
+        while (menuOption != MENU_OPTION_EXIT);
+        // loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
