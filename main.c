@@ -31,7 +31,7 @@ typedef struct
     float totalDiscountGiven;
     char customerNames[MAX_SALES][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
 
-}Statistics;
+} Statistics;
 
 
 int main(void)
@@ -39,6 +39,7 @@ int main(void)
     unsigned short carsWanted = 0, menuOption = 0;
     float  discountThisSale = 0.0, currentTotalPrice = 0.0;
     char membership;
+    bool validName;
 
     Customer currentCustomer = {0};
     Statistics statistics ={.carsInStock = 10};
@@ -56,6 +57,25 @@ int main(void)
         printf("Please enter your name: ");
         scanf(" %100[^\n]", currentCustomer.currentCustomerName);// reads up to 100 characters what the user types until Enter, but does not take the Enter key
         while (getchar() != '\n');// clear the buffer and removes all leftover characters including the Enter key
+
+        do
+        {
+            validName = true;// ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
+            for (int i=0; currentCustomer.currentCustomerName[i]; i++)
+            {
+                if (!isalpha(currentCustomer.currentCustomerName[i]))
+                {
+                    printf("Please enter a valid name using letters only:\n");
+                    scanf(" %100[^\n]", currentCustomer.currentCustomerName);
+                    while (getchar() != '\n');
+                    validName = false;
+                    break;
+                }
+
+            }
+        }
+        while (validName == false);
+
 
 
         // Convert name to have first letter uppercase and rest lowercase
