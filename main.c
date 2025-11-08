@@ -13,6 +13,7 @@
 #define MENU_OPTION_SALE_STATS 3
 #define MENU_OPTION_EXIT 4
 #define MAX_SALES 10
+#define CAR_WANTED 1
 
 typedef struct
 {
@@ -42,13 +43,13 @@ typedef struct
 
 int main(void)
 {
-    unsigned short carsWanted = 1, menuOption = 0, selectedId = 0;
+    unsigned short menuOption = 0, selectedId = 0;
     float discountThisSale = 0.0, currentTotalPrice = 0.0;
     char membership;
     bool validName;
 
     Customer currentCustomer = {0};
-    Statistics statistics = {.carsInStock = 10};
+    Statistics statistics = {.carsInStock = MAX_SALES};
     Car carsOnSale[MAX_SALES] = {
         {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carIsSold = false},
         {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carIsSold = false},
@@ -82,7 +83,7 @@ int main(void)
             validName = true; // ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
             for (int i = 0; currentCustomer.currentCustomerName[i]; i++)
             {
-                if (!isalpha(currentCustomer.currentCustomerName[i]))
+                if (!isalpha(currentCustomer.currentCustomerName[i]) && currentCustomer.currentCustomerName[i] != ' ')
                 {
                     printf("Please enter a valid name using letters only:\n");
                     scanf(" %100[^\n]", currentCustomer.currentCustomerName);
@@ -119,10 +120,24 @@ int main(void)
             switch (menuOption)
             {
             case MENU_OPTION_CARS_ON_SALE:
+                printf("\n===================== CARS ON SALE =====================\n\n");
+
+                printf("%-3s  %-20s  %-6s  %-10s  %-10s\n",// Header row (-) left aligns the text
+                       "ID", "Model", "Year", "Price", "Status");
+                printf("-----------------------------------------------------------\n");
+
                 for (unsigned short i = 0; i < MAX_SALES; i++)
-                    printf("%hu. %s, %hu, %.2f GBP, %s\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear,
-                           carsOnSale[i].carPrice, carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
-                printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
+                {
+                    printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
+                           i + 1,
+                           carsOnSale[i].carModel,
+                           carsOnSale[i].carYear,
+                           carsOnSale[i].carPrice,
+                           carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
+                }
+                printf("-----------------------------------------------------------\n");
+                printf("Cars in stock: %hu\n", statistics.carsInStock);
+                printf("============================================\n");
                 break; // it ends switch
 
             case MENU_OPTION_BUY_CAR: // Buying option codes are here
@@ -215,10 +230,10 @@ int main(void)
                     }
                     printf("Final price after discounts: %.2f GBP\n", currentTotalPrice);
 
-                    statistics.carsInStock -= carsWanted;
+                    statistics.carsInStock -= CAR_WANTED;
                     printf("Cars left in stock: %hu\n", statistics.carsInStock);
 
-                    statistics.totalCarsSold += carsWanted; // Total how many cars sold
+                    statistics.totalCarsSold += CAR_WANTED; // Total how many cars sold
                     statistics.totalIncome += currentTotalPrice; // Total generated income
                     discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                     //  given discount just for this sale
@@ -249,9 +264,9 @@ int main(void)
                     printf("Total price: %.2f GBP\n", currentTotalPrice);
                 }
 
-                statistics.carsInStock -= carsWanted;
+                statistics.carsInStock -= CAR_WANTED;
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
-                statistics.totalCarsSold += carsWanted; // Total how many cars sold.
+                statistics.totalCarsSold += CAR_WANTED; // Total how many cars sold.
                 statistics.totalIncome += currentTotalPrice; // Total generated income
                 discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                 statistics.totalDiscountGiven += discountThisSale;
