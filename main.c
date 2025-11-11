@@ -330,8 +330,7 @@ int main(void)
             getchar(); // waits an entry from user
             system("cls");
         }
-        while (menuOption != MENU_OPTION_EXIT);
-        // loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
+        while (menuOption != MENU_OPTION_EXIT);// loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
