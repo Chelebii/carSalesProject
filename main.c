@@ -15,6 +15,11 @@
 #define MAX_SALES 10
 #define CAR_WANTED 1
 
+unsigned short menuOption = 0, selectedId = 0;
+float discountThisSale = 0.0, currentTotalPrice = 0.0;
+char membership;
+bool validName;
+
 typedef struct
 {
     char currentCustomerName[101];
@@ -40,28 +45,62 @@ typedef struct
     bool carIsSold;
 } Car;
 
+Car carsOnSale[MAX_SALES] = {
+    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carIsSold = false},
+    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carIsSold = false},
+    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carIsSold = false},
+    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carIsSold = false},
+    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carIsSold = false},
+    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carIsSold = false},
+    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carIsSold = false},
+    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carIsSold = false},
+    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carIsSold = false},
+    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carIsSold = false}
+};
+
+void clearScreen(void)
+{
+    system("cls");
+}
+
+void carsOnSaleList(bool showSoldCars)
+{
+    printf("\n===================== CARS ON SALE =====================\n\n");
+    if (showSoldCars)
+    {
+        printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Status");
+        // Header row (-) left aligns the text
+        printf("-----------------------------------------------------------\n");
+
+        for (unsigned short i = 0; i < MAX_SALES; i++)
+        {
+            printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
+                   i + 1,
+                   carsOnSale[i].carModel,
+                   carsOnSale[i].carYear,
+                   carsOnSale[i].carPrice,
+                   carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
+        }
+        printf("-----------------------------------------------------------\n");
+    }
+    else
+    {
+        printf("%-3s  %-20s  %-6s  %-10s\n", "ID", "Model", "Year", "Price");
+        printf("-----------------------------------------------------------\n");
+        for (unsigned short i = 0; i < MAX_SALES; i++)
+            if (carsOnSale[i].carIsSold == false)
+            {
+                printf("%-3hu  %-20s  %-6hu  %-10.2f\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear,
+                       carsOnSale[i].carPrice);
+            }
+    }
+}
 
 int main(void)
 {
-    unsigned short menuOption = 0, selectedId = 0;
-    float discountThisSale = 0.0, currentTotalPrice = 0.0;
-    char membership;
-    bool validName;
-
     Customer currentCustomer = {0};
     Statistics statistics = {.carsInStock = MAX_SALES};
-    Car carsOnSale[MAX_SALES] = {
-        {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carIsSold = false},
-        {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carIsSold = false},
-        {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carIsSold = false},
-        {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carIsSold = false},
-        {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carIsSold = false},
-        {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carIsSold = false},
-        {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carIsSold = false},
-        {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carIsSold = false},
-        {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carIsSold = false},
-        {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carIsSold = false}
-    };
+
 
     system("color 0E"); // black background, yellow text
 
@@ -105,7 +144,7 @@ int main(void)
 
         do
         {
-            system("cls");
+            clearScreen();
 
             printf("1. View Cars on Sale\n");
             printf("2. Buy a Car\n");
@@ -115,14 +154,14 @@ int main(void)
             scanf("%hu", &menuOption);
             while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
 
-            system("cls"); // after input it clears the menu, so it is better visually
+            clearScreen();
 
             switch (menuOption)
             {
             case MENU_OPTION_CARS_ON_SALE:
-                printf("\n===================== CARS ON SALE =====================\n\n");
-
-                printf("%-3s  %-20s  %-6s  %-10s  %-10s\n",// Header row (-) left aligns the text
+                //printf("\n===================== CARS ON SALE =====================\n\n");
+                carsOnSaleList(true);
+                /*printf("%-3s  %-20s  %-6s  %-10s  %-10s\n",// Header row (-) left aligns the text
                        "ID", "Model", "Year", "Price", "Status");
                 printf("-----------------------------------------------------------\n");
 
@@ -134,8 +173,8 @@ int main(void)
                            carsOnSale[i].carYear,
                            carsOnSale[i].carPrice,
                            carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
-                }
-                printf("-----------------------------------------------------------\n");
+                }*/
+
                 printf("Cars in stock: %hu\n", statistics.carsInStock);
                 printf("============================================\n");
                 break; // it ends switch
@@ -148,13 +187,15 @@ int main(void)
                     printf("Please check back later when we restock.\n");
                     break; // goes back to menu
                 }
+                carsOnSaleList(false);
 
-                for (unsigned short i = 0; i < MAX_SALES; i++)
+                /*for (unsigned short i = 0; i < MAX_SALES; i++)
                     if (carsOnSale[i].carIsSold == false)
                     {
                         printf("%hu. %s, %hu, %.2f GBP\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear,
                                carsOnSale[i].carPrice);
-                    }
+                    }*/
+
                 printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
 
                 printf("\nWhich car would you like to buy %s?", currentCustomer.currentCustomerName);
@@ -205,7 +246,7 @@ int main(void)
                 scanf(" %c", &membership);
                 while (getchar() != '\n');
                 // clear the buffer and removes all leftover characters including the Enter key
-                system("cls");
+                clearScreen();
 
                 if (membership == 'Y' || membership == 'y')
                 {
@@ -326,11 +367,11 @@ int main(void)
             //(condition) ? expression_if_true : expression_if_false;
 
 
-            //getchar(); // takes "\n" from buffer
             getchar(); // waits an entry from user
-            system("cls");
+            clearScreen();
         }
-        while (menuOption != MENU_OPTION_EXIT);// loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
+        while (menuOption != MENU_OPTION_EXIT);
+        // loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
@@ -341,10 +382,10 @@ int main(void)
             break;
         }
 
-        system("cls");
+        clearScreen();
     }
     while (1);
-    system("cls"); // clear screen
+    clearScreen();
     printf("See you next time %s!\n", currentCustomer.currentCustomerName);
     return 0;
 }
