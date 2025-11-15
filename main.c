@@ -159,21 +159,8 @@ int main(void)
             switch (menuOption)
             {
             case MENU_OPTION_CARS_ON_SALE:
-                //printf("\n===================== CARS ON SALE =====================\n\n");
-                carsOnSaleList(true);
-                /*printf("%-3s  %-20s  %-6s  %-10s  %-10s\n",// Header row (-) left aligns the text
-                       "ID", "Model", "Year", "Price", "Status");
-                printf("-----------------------------------------------------------\n");
 
-                for (unsigned short i = 0; i < MAX_SALES; i++)
-                {
-                    printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
-                           i + 1,
-                           carsOnSale[i].carModel,
-                           carsOnSale[i].carYear,
-                           carsOnSale[i].carPrice,
-                           carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
-                }*/
+                carsOnSaleList(true);
 
                 printf("Cars in stock: %hu\n", statistics.carsInStock);
                 printf("============================================\n");
