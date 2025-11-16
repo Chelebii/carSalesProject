@@ -176,13 +176,6 @@ int main(void)
                 }
                 carsOnSaleList(false);
 
-                /*for (unsigned short i = 0; i < MAX_SALES; i++)
-                    if (carsOnSale[i].carIsSold == false)
-                    {
-                        printf("%hu. %s, %hu, %.2f GBP\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear,
-                               carsOnSale[i].carPrice);
-                    }*/
-
                 printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
 
                 printf("\nWhich car would you like to buy %s?", currentCustomer.currentCustomerName);
@@ -350,9 +343,7 @@ int main(void)
 
             printf(menuOption == MENU_OPTION_EXIT
                        ? "\n\nPress Enter ..."
-                       : "\n\nPress Enter to return to the Menu..."); // sonucu printf dondur demek,
-            //(condition) ? expression_if_true : expression_if_false;
-
+                       : "\n\nPress Enter to return to the Menu...");
 
             getchar(); // waits an entry from user
             clearScreen();
