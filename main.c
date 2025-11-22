@@ -12,7 +12,7 @@
 #define MENU_OPTION_BUY_CAR 2
 #define MENU_OPTION_SALE_STATS 3
 #define MENU_OPTION_EXIT 4
-#define MAX_SALES 10
+#define MAX_MODEL 100
 #define CAR_WANTED 1
 
 unsigned short menuOption = 0, selectedId = 0;
@@ -34,7 +34,7 @@ typedef struct
     unsigned short numberOfSales;
     float totalIncome;
     float totalDiscountGiven;
-    char customerNames[MAX_SALES][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
+    char customerNames[MAX_MODEL][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
 } Statistics;
 
 typedef struct
@@ -42,21 +42,35 @@ typedef struct
     char carModel[101];
     unsigned short carYear;
     float carPrice;
-    bool carIsSold;
+    unsigned short carStock;
 } Car;
 
-Car carsOnSale[MAX_SALES] = {
-    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carIsSold = false},
-    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carIsSold = false},
-    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carIsSold = false},
-    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carIsSold = false},
-    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carIsSold = false},
-    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carIsSold = false},
-    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carIsSold = false},
-    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carIsSold = false},
-    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carIsSold = false},
-    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carIsSold = false}
+Car carsOnSale[MAX_MODEL] = {
+    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carStock = 3},
+    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carStock = 2},
+    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carStock = 1},
+    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carStock = 1},
+    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carStock = 4},
+    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carStock = 2},
+    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carStock = 1},
+    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carStock = 1},
+    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carStock = 2},
+    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carStock = 3},
+    {.carModel = "Abc", .carYear = 2016, .carPrice = 6400, .carStock = 1}
 };
+
+unsigned short calculateTotalStock(Car carsOnSale[], unsigned short capaticy)
+{
+    unsigned short count = 0;
+    for (unsigned short i = 0; i < capaticy; i++)
+    {
+        if (carsOnSale[i].carModel[0] != '\0')
+        {
+            count ++;
+        }
+    }
+    return count;
+}
 
 void clearScreen(void)
 {
@@ -72,14 +86,15 @@ void carsOnSaleList(bool showSoldCars)
         // Header row (-) left aligns the text
         printf("-----------------------------------------------------------\n");
 
-        for (unsigned short i = 0; i < MAX_SALES; i++)
+        for (unsigned short i = 0; i < MAX_MODEL; i++)
+            if (carsOnSale[i].carModel[0] != '\0')
         {
             printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
                    i + 1,
                    carsOnSale[i].carModel,
                    carsOnSale[i].carYear,
                    carsOnSale[i].carPrice,
-                   carsOnSale[i].carIsSold ? "SOLD" : "AVAILABLE");
+                   carsOnSale[i].carStock > 0 ? "In Stock" : "Sold Out");
         }
         printf("-----------------------------------------------------------\n");
     }
@@ -87,8 +102,8 @@ void carsOnSaleList(bool showSoldCars)
     {
         printf("%-3s  %-20s  %-6s  %-10s\n", "ID", "Model", "Year", "Price");
         printf("-----------------------------------------------------------\n");
-        for (unsigned short i = 0; i < MAX_SALES; i++)
-            if (carsOnSale[i].carIsSold == false)
+        for (unsigned short i = 0; i < MAX_MODEL; i++)
+            if (carsOnSale[i].carStock > 0)
             {
                 printf("%-3hu  %-20s  %-6hu  %-10.2f\n", i + 1, carsOnSale[i].carModel, carsOnSale[i].carYear,
                        carsOnSale[i].carPrice);
@@ -96,22 +111,28 @@ void carsOnSaleList(bool showSoldCars)
     }
 }
 
+void showBanner(void)
+{
+    printf("========================================\n");
+    printf("     WELCOME TO CHELEBI'S GARAGE  \n");
+    printf("========================================\n");
+    printf("      Quality Cars. Fair Deals.\n");
+    printf("========================================\n");
+}
+
+
 int main(void)
 {
     Customer currentCustomer = {0};
-    Statistics statistics = {.carsInStock = MAX_SALES};
+    Statistics statistics = {.carsInStock = calculateTotalStock(carsOnSale, MAX_MODEL)};
 
 
     system("color 0E"); // black background, yellow text
 
     do
     {
-        printf("\n========================================\n");
-        printf("     WELCOME TO CHELEBI'S GARAGE  \n");
-        printf("========================================\n");
-        printf("      Quality Cars. Fair Deals.\n");
-        printf("========================================\n");
-
+        clearScreen();
+        showBanner();
         printf("Please enter your name: ");
         scanf(" %100[^\n]", currentCustomer.currentCustomerName);
         // reads up to 100 characters what the user types until Enter, but does not take the Enter key
@@ -119,12 +140,13 @@ int main(void)
 
         do
         {
+            clearScreen();
             validName = true; // ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
             for (int i = 0; currentCustomer.currentCustomerName[i]; i++)
             {
                 if (!isalpha(currentCustomer.currentCustomerName[i]) && currentCustomer.currentCustomerName[i] != ' ')
                 {
-                    printf("Please enter a valid name using letters only:\n");
+                    printf("Please enter a valid name using letters only: ");
                     scanf(" %100[^\n]", currentCustomer.currentCustomerName);
                     while (getchar() != '\n');
                     validName = false;
@@ -145,6 +167,7 @@ int main(void)
         do
         {
             clearScreen();
+            showBanner();
 
             printf("1. View Cars on Sale\n");
             printf("2. Buy a Car\n");
@@ -178,23 +201,23 @@ int main(void)
 
                 printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
 
-                printf("\nWhich car would you like to buy %s?", currentCustomer.currentCustomerName);
+                printf("\nWhich car would you like to buy %s? ", currentCustomer.currentCustomerName);
                 bool validChoice = false;
 
                 do
                 {
                     scanf("%hu", &selectedId);
                     while (getchar() != '\n');
-
-                    if (selectedId < 1 || selectedId > MAX_SALES)
+                    clearScreen();
+                    if (selectedId < 1 || selectedId > MAX_MODEL)
                     {
-                        printf("\nInvalid car ID. Please choose an available car ID: \n");
+                        printf("\nInvalid car ID. Please choose an available car ID: ");
                         continue; // goes to the start of the loop, skips rest
                     }
-                    if (carsOnSale[selectedId - 1].carIsSold == true) //Check if that car is already sold
+                    if (carsOnSale[selectedId - 1].carStock == 0) //Check if that car is already sold
                     {
                         printf("\nSorry, %s, this car is already sold!\n", currentCustomer.currentCustomerName);
-                        printf("Please choose another car: \n");
+                        printf("Please choose another car: ");
                         continue; // goes to the start of the loop, skips rest
                     }
                     validChoice = true;
@@ -203,10 +226,10 @@ int main(void)
                 // if the user enters an invalid ID, it will ask again until a valid ID is entered
 
                 unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
-                printf("\nYou have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
+                printf("You have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
 
 
-                printf("How old are you %s? Age:", currentCustomer.currentCustomerName);
+                printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
                 scanf("%hu", &currentCustomer.currentCustomerAge);
                 while (getchar() != '\n');
                 // clear the buffer and removes all leftover characters including the Enter key
@@ -262,8 +285,8 @@ int main(void)
 
                     strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
                     // copy currentCustomer text into the 2D array
-                    statistics.numberOfSales++; // increase number of sales after each successful sale
-                    carsOnSale[index].carIsSold = true; // mark the car as sold
+                    statistics.numberOfSales ++; // increase number of sales after each successful sale
+                    carsOnSale[index].carStock --; // mark the car as sold
 
                     menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                     break; // ends switch
@@ -291,7 +314,7 @@ int main(void)
                 statistics.totalIncome += currentTotalPrice; // Total generated income
                 discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                 statistics.totalDiscountGiven += discountThisSale;
-                carsOnSale[index].carIsSold = true; // mark the car as sold
+                carsOnSale[index].carStock --; // mark the car as sold
 
                 strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
                 statistics.numberOfSales++;
