@@ -79,7 +79,7 @@ unsigned short calculateTotalStock(Car carsOnSale[], unsigned short capacity)
     {
         totalStock += carsOnSale[i].carStock;
     }
-    printf("Total stock: %hu\n", totalStock);
+    printf("     Total stock: %31hu\n", totalStock);
     return totalStock;
 }
 
@@ -243,8 +243,7 @@ int main(void)
 
                 carsOnSaleList(true);
                 calculateTotalStock(carsOnSale, MAX_MODEL);
-                //printf("Cars in stock: %hu\n", statistics.carsInStock);
-                printf("============================================\n");
+
                 break;
 
             case MENU_OPTION_BUY_CAR:
@@ -266,18 +265,16 @@ int main(void)
                 unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
                 printf("You have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
 
-
                 printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
                 scanf("%hu", &currentCustomer.currentCustomerAge);
                 while (getchar() != '\n');
-                // clear the buffer and removes all leftover characters including the Enter key
 
                 if (currentCustomer.currentCustomerAge < 18)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
                            currentCustomer.currentCustomerName);
-                    menuOption = MENU_OPTION_EXIT;
-                    break;
+                    menuOption = MENU_OPTION_EXIT;// eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    break;// exits switch, goes back to do while
                 }
 
                 currentTotalPrice = carsOnSale[index].carPrice;
