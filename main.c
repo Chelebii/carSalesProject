@@ -30,7 +30,7 @@ typedef struct
 typedef struct
 {
     unsigned short carsInStock;
-    unsigned short totalCarsSold;
+
     unsigned short numberOfSales;
     float totalIncome;
     float totalDiscountGiven;
@@ -117,11 +117,11 @@ void carsOnSaleList(bool showSoldCars)
             if (carsOnSale[i].carModel[0] != '\0')
             {
                 printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
-                    i + 1,
-                    carsOnSale[i].carModel,
-                    carsOnSale[i].carYear,
-                    carsOnSale[i].carPrice,
-                    carsOnSale[i].carStock > 0 ? "Available" : "Sold");
+                       i + 1,
+                       carsOnSale[i].carModel,
+                       carsOnSale[i].carYear,
+                       carsOnSale[i].carPrice,
+                       carsOnSale[i].carStock > 0 ? "Available" : "Sold");
             }
     }
 }
@@ -143,7 +143,7 @@ void showMenu(void)
     printf("4. Log out\n");
 }
 
-void nameValidation(Customer *c)
+void nameValidation(Customer* c)
 {
     do
     {
@@ -165,7 +165,7 @@ void nameValidation(Customer *c)
     while (validName == false);
 }
 
-void nameToUpperCase(char *name)
+void nameToUpperCase(char* name)
 {
     name[0] = toupper(name[0]);
     for (int i = 1; name[i]; i++)
@@ -174,7 +174,7 @@ void nameToUpperCase(char *name)
     }
 }
 
-unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer *c)
+unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer* c)
 {
     unsigned short selectedId = 0;
     bool validChoice = false;
@@ -182,7 +182,7 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
     {
         scanf("%hu", &selectedId);
         while (getchar() != '\n');
-        clearScreen();
+        //clearScreen();
 
         if (selectedId < 1 || selectedId > countCarModels(carsOnSale, MAX_MODEL))
         {
@@ -191,7 +191,7 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
         }
         if (carsOnSale[selectedId - 1].carStock == 0) //Check if that car is already sold
         {
-            printf("\nSorry, %s, this car is already sold!\n",c-> currentCustomerName);
+            printf("\nSorry, %s, this car is already sold!\n", c->currentCustomerName);
             printf("Please choose another car: ");
             continue; // goes to the start of the loop, skips rest
         }
@@ -203,11 +203,10 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
 }
 
 
-
 int main(void)
 {
     Customer currentCustomer = {0};
-    Statistics statistics = {.carsInStock = countCarModels(carsOnSale, MAX_MODEL)};
+    Statistics statistics = {.carsInStock = calculateTotalStock(carsOnSale, MAX_MODEL)};
 
 
     system("color 0E"); // black background, yellow text
@@ -256,7 +255,8 @@ int main(void)
                 }
                 carsOnSaleList(false);
 
-                printf("\nCurrently, we have %hu cars available.\n", statistics.carsInStock);
+                printf("\nCurrently, we have %hu cars in stock.\n", statistics.carsInStock);
+                printf("And %hu different car models available for sale.\n", countCarModels(carsOnSale, MAX_MODEL));
 
                 printf("\nWhich car would you like to buy %s? ", currentCustomer.currentCustomerName);
 
@@ -265,16 +265,25 @@ int main(void)
                 unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
                 printf("You have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
 
-                printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
-                scanf("%hu", &currentCustomer.currentCustomerAge);
-                while (getchar() != '\n');
+                do
+                {
+                    printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
+                    scanf("%hu", &currentCustomer.currentCustomerAge);
+                    while (getchar() != '\n');
+                    if (currentCustomer.currentCustomerAge < 1 || currentCustomer.currentCustomerAge > 120)
+                    {
+                        clearScreen();
+                        printf("Invalid age. Please enter a valid age between 1 and 120: ");
+                    }
+                }
+                while (currentCustomer.currentCustomerAge < 1 || currentCustomer.currentCustomerAge > 120);
 
                 if (currentCustomer.currentCustomerAge < 18)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
                            currentCustomer.currentCustomerName);
-                    menuOption = MENU_OPTION_EXIT;// eger exit olmazsa, yasi kucuk kullanici sistemde kalir
-                    break;// exits switch, goes back to do while
+                    menuOption = MENU_OPTION_EXIT; // eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    break; // exits switch, goes back to do while
                 }
 
                 currentTotalPrice = carsOnSale[index].carPrice;
@@ -312,7 +321,6 @@ int main(void)
                     statistics.carsInStock -= CAR_WANTED;
                     printf("Cars left in stock: %hu\n", statistics.carsInStock);
 
-                    statistics.totalCarsSold += CAR_WANTED; // Total how many cars sold
                     statistics.totalIncome += currentTotalPrice; // Total generated income
                     discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                     //  given discount just for this sale
@@ -345,7 +353,7 @@ int main(void)
 
                 statistics.carsInStock -= CAR_WANTED;
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
-                statistics.totalCarsSold += CAR_WANTED; // Total how many cars sold.
+
                 statistics.totalIncome += currentTotalPrice; // Total generated income
                 discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
                 statistics.totalDiscountGiven += discountThisSale;
@@ -361,21 +369,10 @@ int main(void)
             case MENU_OPTION_SALE_STATS:
                 printf("\n=== Sales Summary ===\n");
                 printf("Customers served      : %hu\n", statistics.numberOfSales);
-                printf("Cars sold             : %hu\n", statistics.totalCarsSold);
+
                 printf("Total income          : %.2f GBP\n", statistics.totalIncome);
                 printf("Total discount given  : %.2f GBP\n", statistics.totalDiscountGiven);
 
-                if (statistics.totalCarsSold > 0) // Prevent division by zero when there are no sales
-                {
-                    printf("Average discount per car  : %.2f GBP\n",
-                           statistics.totalDiscountGiven / statistics.totalCarsSold);
-                    printf("Average income  per car   : %.2f GBP\n", statistics.totalIncome / statistics.totalCarsSold);
-                }
-                else
-                {
-                    printf("Average discount per car  : N/A (no cars sold)\n");
-                    printf("Average income  per car   : N/A (no cars sold)\n");
-                }
 
                 if (statistics.numberOfSales == 0)
                 {
