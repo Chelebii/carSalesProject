@@ -30,7 +30,6 @@ typedef struct
 typedef struct
 {
     unsigned short carsInStock;
-
     unsigned short numberOfSales;
     float totalIncome;
     float totalDiscountGiven;
@@ -81,6 +80,21 @@ unsigned short calculateTotalStock(Car carsOnSale[], unsigned short capacity)
     }
     printf("     Total stock: %31hu\n", totalStock);
     return totalStock;
+}
+
+void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned short index, Customer* c,
+                               float currentTotalPrice)
+{
+    stats->carsInStock -= CAR_WANTED;
+    carsOnSale[index].carStock--; // mark the car as sold
+
+    stats->totalIncome += currentTotalPrice; // Total generated income
+
+    float discountThisSale = carsOnSale[index].carPrice - currentTotalPrice; //  given discount just for this sale
+    stats->totalDiscountGiven += discountThisSale; // add this sale's discount to total discount
+
+    strcpy(stats->customerNames[stats->numberOfSales], c->currentCustomerName);
+    stats->numberOfSales++; // increase number of sales after each successful sale
 }
 
 void clearScreen(void)
@@ -286,14 +300,13 @@ int main(void)
                     break; // exits switch, goes back to do while
                 }
 
-                currentTotalPrice = carsOnSale[index].carPrice;
-
 
                 printf("\nDo you have a Chelebi Garage membership card? (Y/N): ");
                 scanf(" %c", &membership);
                 while (getchar() != '\n');
                 // clear the buffer and removes all leftover characters including the Enter key
                 clearScreen();
+
 
                 if (membership == 'Y' || membership == 'y')
                 {
@@ -305,7 +318,9 @@ int main(void)
                     currentCustomer.currentCustomerIsMember = false;
                 }
 
-                //check discount and update and sale happens here
+                currentTotalPrice = carsOnSale[index].carPrice; // original car price
+
+                //check discount and update and sale statistics
                 if (currentCustomer.currentCustomerAge >= DISCOUNT_MIN_AGE && currentCustomer.currentCustomerAge <=
                     DISCOUNT_MAX_AGE)
                 {
@@ -317,22 +332,6 @@ int main(void)
                         currentTotalPrice *= EXTRA10; // gives extra %10 =*0.9
                     }
                     printf("Final price after discounts: %.2f GBP\n", currentTotalPrice);
-
-                    statistics.carsInStock -= CAR_WANTED;
-                    printf("Cars left in stock: %hu\n", statistics.carsInStock);
-
-                    statistics.totalIncome += currentTotalPrice; // Total generated income
-                    discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
-                    //  given discount just for this sale
-                    statistics.totalDiscountGiven += discountThisSale; // add this sale's discount to total discount
-
-                    strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
-                    // copy currentCustomer text into the 2D array
-                    statistics.numberOfSales++; // increase number of sales after each successful sale
-                    carsOnSale[index].carStock--; // mark the car as sold
-
-                    menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
-                    break; // ends switch
                 }
 
                 else if (currentCustomer.currentCustomerIsMember == true)
@@ -346,21 +345,13 @@ int main(void)
 
                 else
                 {
-                    currentTotalPrice = carsOnSale[index].carPrice;
                     printf("No discount applied for this purchase.\n");
                     printf("Total price: %.2f GBP\n", currentTotalPrice);
                 }
 
-                statistics.carsInStock -= CAR_WANTED;
+                updateStatisticsAfterSale(&statistics, carsOnSale, index, &currentCustomer, currentTotalPrice);
+
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
-
-                statistics.totalIncome += currentTotalPrice; // Total generated income
-                discountThisSale = carsOnSale[index].carPrice - currentTotalPrice;
-                statistics.totalDiscountGiven += discountThisSale;
-                carsOnSale[index].carStock--; // mark the car as sold
-
-                strcpy(statistics.customerNames[statistics.numberOfSales], currentCustomer.currentCustomerName);
-                statistics.numberOfSales++;
 
                 menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                 break; // buying options finished
@@ -385,11 +376,11 @@ int main(void)
                         printf("Customer %hu: %s\n", i + 1, statistics.customerNames[i]); // prints customer names
                     }
                 }
-                break; //ends switch
+                break;
 
             case MENU_OPTION_EXIT:
                 printf("Thank you for using our service %s.\n", currentCustomer.currentCustomerName);
-                break; // ends switch
+                break;
 
             default:
                 printf("Please choose a number between 1-4: ");
@@ -404,7 +395,7 @@ int main(void)
             clearScreen();
         }
         while (menuOption != MENU_OPTION_EXIT);
-        // loop continues while option is NOT EXIT (4). If user chose EXIT, loop stops.
+        // loop continues while option is NOT EXIT (4). If user choose EXIT, loop stops.
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
