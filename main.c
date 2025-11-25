@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h> // toupper(), tolower()
 #include <stdbool.h>
+#include <time.h> //localtime fonksiyonu burada tanimli
 
 #define DISCOUNT_MIN_AGE 20
 #define DISCOUNT_MAX_AGE 25
@@ -34,7 +35,8 @@ typedef struct
     unsigned short carYear;
     float finalPrice;
     float discountAmount;
-    char discountType[51];   // "No discount", "Age", "Membership", "Age + Membership"
+    char discountType[51]; // "No discount", "Age", "Membership", "Age + Membership"
+    time_t saleDate;
 } Sale; // represents a single completed sale (used for statistics)
 
 typedef struct
@@ -46,7 +48,6 @@ typedef struct
     Sale sales[MAX_MODEL];
     //char customerNames[MAX_MODEL][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
 } Statistics;
-
 
 
 typedef struct
@@ -132,6 +133,7 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
     {
         strcpy(stats->sales[s].discountType, "Membership");
     }
+    time(&stats->sales[s].saleDate);
 
     stats->numberOfSales++; // increase number of sales after each successful sale
 }
@@ -235,10 +237,12 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
     {
         scanf("%hu", &selectedId);
         while (getchar() != '\n');
-        //clearScreen();
+
 
         if (selectedId < 1 || selectedId > countCarModels(carsOnSale, MAX_MODEL))
         {
+            clearScreen();
+            carsOnSaleList(false);
             printf("\nInvalid car ID. Please choose an available car ID: ");
             continue; // goes to the start of the loop, skips rest
         }
@@ -284,7 +288,7 @@ int main(void)
             showBanner();
             showMenu();
 
-            printf("\nChoose an option from menu %s: ", currentCustomer.currentCustomerName);
+            printf("\nChoose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
             scanf("%hu", &menuOption);
             while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
 
@@ -394,7 +398,8 @@ int main(void)
                     printf("Total price: %.2f GBP\n", currentTotalPrice);
                 }
 
-                updateStatisticsAfterSale(&statistics, carsOnSale, index, &currentCustomer, currentTotalPrice, ageDiscountApplied, membershipDiscountApplied);
+                updateStatisticsAfterSale(&statistics, carsOnSale, index, &currentCustomer, currentTotalPrice,
+                                          ageDiscountApplied, membershipDiscountApplied);
 
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
 
@@ -414,29 +419,44 @@ int main(void)
                 }
                 else
                 {
-                    printf("%-3s  %-15s %-5s %-18s %-6s %-18s %-10s\n",
-                           "No", "Customer", "Age", "Car Model", "Year",
-                           "Discount Type", "Discount GBP");
-                    printf("-----------------------------------------------------------------------------------\n");
+                    printf("%-3s %-15s %-5s %-18s %-6s %-18s %-12s %-20s\n",
+           "No", "Customer", "Age", "Car Model", "Year",
+           "Discount Type", "Disc GBP", "Date / Time");
+                    printf("---------------------------------------------------------------------------------------------------------------\n");
 
                     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
                     {
                         Sale s = statistics.sales[i];
 
-                        printf("%-3hu  %-15s %-5hu %-18s %-6hu %-18s %10.2f\n",
+                        char timeOnSale[20];
+                        struct tm* localTime = localtime(&s.saleDate);
+                        strftime(timeOnSale, sizeof(timeOnSale), "%d/%m/%Y %H:%M:%S", localTime);
+
+                        printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-20s\n",
                                i + 1,
                                s.customerName,
                                s.customerAge,
                                s.carModel,
                                s.carYear,
                                s.discountType,
-                               s.discountAmount);
+                               s.discountAmount,
+                               timeOnSale);
                     }
                 }
                 break;
 
             default:
-                printf("Please choose a number between 1-4: ");
+                do
+                {
+                    showMenu();
+                    printf("\nInvalid option.");
+                    printf("\nPlease choose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
+                    scanf("%hu", &menuOption);
+                    while (getchar() != '\n');
+                    // clear the buffer and removes all leftover characters including the Enter key
+                    clearScreen();
+                }
+                while (menuOption < 1 || menuOption > 4);
             }
 
 
