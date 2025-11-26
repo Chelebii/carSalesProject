@@ -209,6 +209,7 @@ void nameValidation(Customer* c)
             // isalpha() requires unsigned char; prevents undefined behavior
             if (!isalpha((unsigned char)c->currentCustomerName[i]) && c->currentCustomerName[i] != ' ')
             {
+                showBanner();
                 printf("Please enter a valid name using letters only: ");
                 scanf(" %100[^\n]", c->currentCustomerName);
                 while (getchar() != '\n');
@@ -259,7 +260,92 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
     return selectedId;
 }
 
+void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
+{
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i+1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carPrice < carsOnSale[j].carPrice)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
 
+void sortByPriceAscending(Car carsOnSale[], unsigned short capacity)
+{
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i+1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carPrice > carsOnSale[j].carPrice)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
+
+void sortByStockDescending(Car carsOnSale[], unsigned short capacity)
+{
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i+1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carStock < carsOnSale[j].carStock)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
+
+void sortByStockAscending(Car carsOnSale[], unsigned short capacity)
+{
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i+1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carStock > carsOnSale[j].carStock)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
+
+void showSortMenu(void)
+{
+    printf("1. Price descending\n");
+    printf("2. Price ascending\n");
+    printf("3. Stock descending\n");
+    printf("4. Stock ascending\n");
+}
+void sortMenuOptionValidation(unsigned short* sortMenuOption)
+{
+    do
+    {
+        scanf(" %hu", sortMenuOption);
+        while (getchar() != '\n');
+        if (*sortMenuOption < 1 || *sortMenuOption > 4)
+        {
+            clearScreen();
+            showBanner();
+            showSortMenu();
+            printf("Invalid option. Please choose between 1-4: ");
+        }
+    }while (*sortMenuOption < 1 || *sortMenuOption > 4);
+}
 int main(void)
 {
     Customer currentCustomer = {0};
@@ -277,6 +363,7 @@ int main(void)
         scanf(" %100[^\n]", currentCustomer.currentCustomerName);
         // reads up to 100 characters what the user types until Enter, but does not take the Enter key
         while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
+
 
         nameValidation(&currentCustomer);
 
@@ -297,6 +384,29 @@ int main(void)
             switch (menuOption)
             {
             case MENU_OPTION_CARS_ON_SALE:
+
+                unsigned short sortMenuOption = 0;
+                clearScreen();
+                showBanner();
+                showSortMenu();
+                printf("How would you like to sort the cars on sale: ");
+                sortMenuOptionValidation(&sortMenuOption);
+
+                switch (sortMenuOption)
+                {
+                case 1:
+                    sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                case 2:
+                    sortByPriceAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                case 3:
+                    sortByStockDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                case 4:
+                    sortByStockAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                }
 
                 carsOnSaleList(true);
                 calculateTotalStock(carsOnSale, MAX_MODEL);
@@ -448,6 +558,7 @@ int main(void)
             default:
                 do
                 {
+                    showBanner();
                     showMenu();
                     printf("\nInvalid option.");
                     printf("\nPlease choose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
