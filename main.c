@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> // system() function
 #include <string.h>
-#include <ctype.h> // toupper(), tolower()
+#include <ctype.h> // toupper(), tolower(), isAlpha
 #include <stdbool.h>
 #include <time.h> //localtime fonksiyonu burada tanimli
 
@@ -145,42 +145,35 @@ void clearScreen(void)
     system("cls");
 }
 
+void clearBuffer(void)
+{
+    while (getchar() != '\n');
+    // clear the buffer and removes all leftover characters including the Enter key
+}
+
 void carsOnSaleList(bool showSoldCars)
 {
     printf("\n===================== CARS ON SALE =====================\n\n");
-    if (showSoldCars)
-    {
-        printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Stock");
-        // Header row (-) left aligns the text
-        printf("-----------------------------------------------------------\n");
-
-        for (unsigned short i = 0; i < MAX_MODEL; i++)
-            if (carsOnSale[i].carModel[0] != '\0')
+    printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Status");
+    printf("-----------------------------------------------------------\n");
+    for (unsigned short i = 0; i < MAX_MODEL; i++)
+        if (carsOnSale[i].carModel[0] != '\0')
+        {
+            printf("%-3hu  %-20s  %-6hu  %-10.2f  ",
+                   i + 1,
+                   carsOnSale[i].carModel,
+                   carsOnSale[i].carYear,
+                   carsOnSale[i].carPrice);
+            if (showSoldCars)
             {
-                printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10hu\n",
-                       i + 1,
-                       carsOnSale[i].carModel,
-                       carsOnSale[i].carYear,
-                       carsOnSale[i].carPrice,
-                       carsOnSale[i].carStock);
+                printf("%-10hu", carsOnSale[i].carStock);
             }
-        printf("-----------------------------------------------------------\n");
-    }
-    else
-    {
-        printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Status");
-        printf("-----------------------------------------------------------\n");
-        for (unsigned short i = 0; i < MAX_MODEL; i++)
-            if (carsOnSale[i].carModel[0] != '\0')
+            else
             {
-                printf("%-3hu  %-20s  %-6hu  %-10.2f  %-10s\n",
-                       i + 1,
-                       carsOnSale[i].carModel,
-                       carsOnSale[i].carYear,
-                       carsOnSale[i].carPrice,
-                       carsOnSale[i].carStock > 0 ? "Available" : "Sold");
+                printf("%-10s", carsOnSale[i].carStock > 0 ? "Available" : "Sold");
             }
-    }
+            printf("\n");
+        }
 }
 
 void showBanner(void)
@@ -209,12 +202,12 @@ void nameValidation(Customer* c)
         for (int i = 0; c->currentCustomerName[i]; i++)
         {
             // isalpha() requires unsigned char; prevents undefined behavior
-            if (!isalpha((unsigned char)c->currentCustomerName[i]) && c->currentCustomerName[i] != ' ')
+            if (!isalpha(c->currentCustomerName[i]) && c->currentCustomerName[i] != ' ')
             {
                 showBanner();
                 printf("Please enter a valid name using letters only: ");
                 scanf(" %100[^\n]", c->currentCustomerName);
-                while (getchar() != '\n');
+                clearBuffer();
                 validName = false;
                 break;
             }
@@ -232,14 +225,14 @@ void nameToUpperCase(char* name)
     }
 }
 
-unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer *customer)
+unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer* customer)
 {
     unsigned short selectedId = 0;
     bool validChoice = false;
     do
     {
         scanf("%hu", &selectedId);
-        while (getchar() != '\n');
+        clearBuffer();
 
 
         if (selectedId < 1 || selectedId > countCarModels(carsOnSale, MAX_MODEL))
@@ -266,7 +259,7 @@ void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
 {
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i+1; j < capacity; j++)
+        for (unsigned short j = i + 1; j < capacity; j++)
         {
             if (carsOnSale[i].carPrice < carsOnSale[j].carPrice)
             {
@@ -282,7 +275,7 @@ void sortByPriceAscending(Car carsOnSale[], unsigned short capacity)
 {
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i+1; j < capacity; j++)
+        for (unsigned short j = i + 1; j < capacity; j++)
         {
             if (carsOnSale[i].carPrice > carsOnSale[j].carPrice)
             {
@@ -298,7 +291,7 @@ void sortByStockDescending(Car carsOnSale[], unsigned short capacity)
 {
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i+1; j < capacity; j++)
+        for (unsigned short j = i + 1; j < capacity; j++)
         {
             if (carsOnSale[i].carStock < carsOnSale[j].carStock)
             {
@@ -314,7 +307,7 @@ void sortByStockAscending(Car carsOnSale[], unsigned short capacity)
 {
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i+1; j < capacity; j++)
+        for (unsigned short j = i + 1; j < capacity; j++)
         {
             if (carsOnSale[i].carStock > carsOnSale[j].carStock)
             {
@@ -333,12 +326,13 @@ void showSortMenu(void)
     printf("3. Stock descending\n");
     printf("4. Stock ascending\n");
 }
+
 void sortMenuOptionValidation(unsigned short* sortMenuOption)
 {
     do
     {
         scanf(" %hu", sortMenuOption);
-        while (getchar() != '\n');
+        clearBuffer();
         if (*sortMenuOption < 1 || *sortMenuOption > 4)
         {
             clearScreen();
@@ -346,10 +340,11 @@ void sortMenuOptionValidation(unsigned short* sortMenuOption)
             showSortMenu();
             printf("Invalid option. Please choose between 1-4: ");
         }
-    }while (*sortMenuOption < 1 || *sortMenuOption > 4);
+    }
+    while (*sortMenuOption < 1 || *sortMenuOption > 4);
 }
 
-void customerFeedback(Sale *saleFeedback)
+void customersFeedbackRating()
 {
     printf("\nPlease rate your experience!\n");
     printf("5 *****  (Excellent)\n");
@@ -358,16 +353,60 @@ void customerFeedback(Sale *saleFeedback)
     printf("2 **     (Poor)\n");
     printf("1 *      (Very Poor)\n");
     printf("Your choice (1-5): ");
+}
 
-    scanf("%hu", &saleFeedback->customerFeedbackRating);
-    while (getchar() != '\n');
+/*void customerFeedbackRatingValidation()
+{
+    do
+    {
+        scanf(" %hu", &customerFeedbackRating);
+        clearBuffer();
+        if (customerFeedbackRating < 1 || customerFeedbackRating > 5)
+        {
+            clearScreen();
+            printf("Invalid rating. Please choose a rating between 1-5: ");
+            customerFeedbackRating();
+        }
+    }while (customerFeedbackRating < 1 || customerFeedbackRating > 5);
+}*/
 
-    printf("Write a short comment or press Enter to skip:\n");
+void getCustomerFeedback(Sale* saleFeedback)
+{
+    printf("Please write a short comment or press Enter to skip:\n");
     //Reads a full line including spaces and prevents buffer overflow.
     fgets(saleFeedback->customerFeedback, sizeof(saleFeedback->customerFeedback), stdin);
 
     printf("\nThank you for your feedback!\n");
 }
+
+void captureValueAndValidate(unsigned short *value, unsigned short min, unsigned short max)
+{
+    do
+    {
+        int capturedValue= scanf("%hu", value);
+        clearBuffer();
+        if (capturedValue == 1 && *value >= min && *value <= max)
+        {
+            break;
+        }
+        printf("Please enter a valid value between %hu and %hu: ", min, max);
+    }while (1);
+
+}
+
+/*char captureYesOrNo(char *input)
+{
+
+    int result = scanf(" %c", input); //
+    clearBuffer();
+
+    *input = toupper(*input);
+
+    if (result ==1 && *input == 'Y')
+    {
+        return 'Y';
+    }
+}*/
 
 int main(void)
 {
@@ -383,10 +422,9 @@ int main(void)
         showBanner();
 
         printf("Please enter your name: ");
-        scanf(" %100[^\n]", currentCustomer.currentCustomerName);
         // reads up to 100 characters what the user types until Enter, but does not take the Enter key
-        while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
-
+        scanf(" %100[^\n]", currentCustomer.currentCustomerName);
+        clearBuffer();
 
         nameValidation(&currentCustomer);
 
@@ -397,10 +435,9 @@ int main(void)
             clearScreen();
             showBanner();
             showMenu();
+            printf("\nPlease choose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
 
-            printf("\nChoose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
-            scanf("%hu", &menuOption);
-            while (getchar() != '\n'); // clear the buffer and removes all leftover characters including the Enter key
+            captureValueAndValidate(&menuOption,1,4);
 
             clearScreen();
 
@@ -418,15 +455,23 @@ int main(void)
                 switch (sortMenuOption)
                 {
                 case 1:
+                    clearScreen();
+                    printf("\nSorting by price descending...\n");
                     sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 2:
+                    clearScreen();
+                    printf("\nSorting by price ascending...\n");
                     sortByPriceAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 3:
+                    clearScreen();
+                    printf("\nSorting by stock descending...\n");
                     sortByStockDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 4:
+                    clearScreen();
+                    printf("\nSorting by stock ascending...\n");
                     sortByStockAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 }
@@ -447,8 +492,8 @@ int main(void)
                 sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                 carsOnSaleList(false);
 
-                printf("\nCurrently, we have %hu cars in stock.\n", statistics.carsInStock);
-                printf("And %hu different car models available for sale.\n", countCarModels(carsOnSale, MAX_MODEL));
+                printf("\nTotal cars in stock      : %hu\n", statistics.carsInStock);
+                printf("Models currently on sale : %hu\n", countCarModels(carsOnSale, MAX_MODEL));
 
                 printf("\nWhich car would you like to buy %s? ", currentCustomer.currentCustomerName);
 
@@ -457,18 +502,9 @@ int main(void)
                 unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
                 printf("You have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
 
-                do
-                {
-                    printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
-                    scanf("%hu", &currentCustomer.currentCustomerAge);
-                    while (getchar() != '\n');
-                    if (currentCustomer.currentCustomerAge < 1 || currentCustomer.currentCustomerAge > 120)
-                    {
-                        clearScreen();
-                        printf("Invalid age. Please enter a valid age between 1 and 120: ");
-                    }
-                }
-                while (currentCustomer.currentCustomerAge < 1 || currentCustomer.currentCustomerAge > 120);
+                printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
+
+                captureValueAndValidate(&currentCustomer.currentCustomerAge, 1, 99);
 
                 if (currentCustomer.currentCustomerAge < 18)
                 {
@@ -481,12 +517,11 @@ int main(void)
 
                 printf("\nDo you have a Chelebi Garage membership card? (Y/N): ");
                 scanf(" %c", &membership);
-                while (getchar() != '\n');
-                // clear the buffer and removes all leftover characters including the Enter key
+                clearBuffer();
                 clearScreen();
 
-
-                if (membership == 'Y' || membership == 'y')
+                membership = toupper(membership);
+                if (membership == 'Y')
                 {
                     currentCustomer.currentCustomerIsMember = true;
                     printf("\nMembership confirmed \n");
@@ -497,7 +532,7 @@ int main(void)
                 }
 
                 //local variables
-                float currentTotalPrice = 0.0;
+                float currentTotalPrice;
                 bool ageDiscountApplied = false;
                 bool membershipDiscountApplied = currentCustomer.currentCustomerIsMember;
 
@@ -513,7 +548,7 @@ int main(void)
                     if (currentCustomer.currentCustomerIsMember == true)
                     {
                         printf("Plus, your Chelebi Garage membership gives you an extra 10%% discount.\n");
-                        currentTotalPrice *= EXTRA10; // gives extra %10 =*0.9
+                        currentTotalPrice *= EXTRA10; // gives extra %10 = *0.9
                     }
                     printf("Final price after discounts: %.2f GBP\n", currentTotalPrice);
                 }
@@ -537,7 +572,12 @@ int main(void)
 
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
 
-                customerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
+                customersFeedbackRating();
+
+                captureValueAndValidate(&statistics.sales[statistics.numberOfSales-1].customerFeedbackRating, 1, 5);
+
+
+                getCustomerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
 
                 menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                 break; // buying options finished
@@ -552,55 +592,42 @@ int main(void)
                 if (statistics.numberOfSales == 0)
                 {
                     printf("No customers served yet.\n");
+                    break;
                 }
-                else
+                printf("%-3s %-15s %-5s %-18s %-6s %-18s %-12s %-20s\n",
+                       "No", "Customer", "Age", "Car Model", "Year",
+                       "Discount Type", "Disc GBP", "Date / Time");
+                printf(
+                    "---------------------------------------------------------------------------------------------------------------\n");
+
+                for (unsigned short i = 0; i < statistics.numberOfSales; i++)
                 {
-                    printf("%-3s %-15s %-5s %-18s %-6s %-18s %-12s %-20s\n",
-           "No", "Customer", "Age", "Car Model", "Year",
-           "Discount Type", "Disc GBP", "Date / Time");
-                    printf("---------------------------------------------------------------------------------------------------------------\n");
+                    Sale s = statistics.sales[i];
 
-                    for (unsigned short i = 0; i < statistics.numberOfSales; i++)
-                    {
-                        Sale s = statistics.sales[i];
+                    char timeOnSale[20];
+                    struct tm* localTime = localtime(&s.saleDate);
+                    strftime(timeOnSale, sizeof(timeOnSale), "%d/%m/%Y %H:%M:%S", localTime);
 
-                        char timeOnSale[20];
-                        struct tm* localTime = localtime(&s.saleDate);
-                        strftime(timeOnSale, sizeof(timeOnSale), "%d/%m/%Y %H:%M:%S", localTime);
+                    printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-20s\n",
+                           i + 1,
+                           s.customerName,
+                           s.customerAge,
+                           s.carModel,
+                           s.carYear,
+                           s.discountType,
+                           s.discountAmount,
+                           timeOnSale);
+                    printf("    Rating : %hu/5\n", s.customerFeedbackRating);
+                    if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
+                        printf("    Comment: %s\n", s.customerFeedback);
+                    else
+                        printf("    Comment: (no comment)\n");
 
-                        printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-20s\n",
-                               i + 1,
-                               s.customerName,
-                               s.customerAge,
-                               s.carModel,
-                               s.carYear,
-                               s.discountType,
-                               s.discountAmount,
-                               timeOnSale);
-                        printf("    Rating : %hu/5\n", s.customerFeedbackRating);
-                        if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
-                            printf("    Comment: %s\n", s.customerFeedback);
-                        else
-                            printf("    Comment: (no comment)\n");
-
-                        printf("\n");
-                    }
+                    printf(
+                        "---------------------------------------------------------------------------------------------------------------\n");
                 }
+
                 break;
-
-            default:
-                do
-                {
-                    showBanner();
-                    showMenu();
-                    printf("\nInvalid option.");
-                    printf("\nPlease choose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
-                    scanf("%hu", &menuOption);
-                    while (getchar() != '\n');
-                    // clear the buffer and removes all leftover characters including the Enter key
-                    clearScreen();
-                }
-                while (menuOption < 1 || menuOption > 4);
             }
 
 
@@ -616,9 +643,10 @@ int main(void)
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
-        while (getchar() != '\n');
+        clearBuffer();
 
-        if (quitChoice == 'Y' || quitChoice == 'y')
+        quitChoice = toupper(quitChoice);
+        if (quitChoice == 'Y')
         {
             break;
         }
