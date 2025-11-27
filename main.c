@@ -37,6 +37,8 @@ typedef struct
     float discountAmount;
     char discountType[51]; // "No discount", "Age", "Membership", "Age + Membership"
     time_t saleDate;
+    unsigned short customerFeedbackRating; // 1 to 5
+    char customerFeedback[201];
 } Sale; // represents a single completed sale (used for statistics)
 
 typedef struct
@@ -134,6 +136,7 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
     }
     time(&stats->sales[s].saleDate);
 
+
     stats->numberOfSales++; // increase number of sales after each successful sale
 }
 
@@ -229,7 +232,7 @@ void nameToUpperCase(char* name)
     }
 }
 
-unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer* c)
+unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer *customer)
 {
     unsigned short selectedId = 0;
     bool validChoice = false;
@@ -248,7 +251,7 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
         }
         if (carsOnSale[selectedId - 1].carStock == 0) //Check if that car is already sold
         {
-            printf("\nSorry, %s, this car is already sold!\n", c->currentCustomerName);
+            printf("\nSorry, %s, this car is already sold!\n", customer->currentCustomerName);
             printf("Please choose another car: ");
             continue; // goes to the start of the loop, skips rest
         }
@@ -345,6 +348,27 @@ void sortMenuOptionValidation(unsigned short* sortMenuOption)
         }
     }while (*sortMenuOption < 1 || *sortMenuOption > 4);
 }
+
+void customerFeedback(Sale *saleFeedback)
+{
+    printf("\nPlease rate your experience!\n");
+    printf("5 *****  (Excellent)\n");
+    printf("4 ****   (Good)\n");
+    printf("3 ***    (Average)\n");
+    printf("2 **     (Poor)\n");
+    printf("1 *      (Very Poor)\n");
+    printf("Your choice (1-5): ");
+
+    scanf("%hu", &saleFeedback->customerFeedbackRating);
+    while (getchar() != '\n');
+
+    printf("Write a short comment or press Enter to skip:\n");
+    //Reads a full line including spaces and prevents buffer overflow.
+    fgets(saleFeedback->customerFeedback, sizeof(saleFeedback->customerFeedback), stdin);
+
+    printf("\nThank you for your feedback!\n");
+}
+
 int main(void)
 {
     Customer currentCustomer = {0};
@@ -513,6 +537,8 @@ int main(void)
 
                 printf("Cars left in stock: %hu\n", statistics.carsInStock);
 
+                customerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
+
                 menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
                 break; // buying options finished
 
@@ -551,6 +577,13 @@ int main(void)
                                s.discountType,
                                s.discountAmount,
                                timeOnSale);
+                        printf("    Rating : %hu/5\n", s.customerFeedbackRating);
+                        if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
+                            printf("    Comment: %s\n", s.customerFeedback);
+                        else
+                            printf("    Comment: (no comment)\n");
+
+                        printf("\n");
                     }
                 }
                 break;
