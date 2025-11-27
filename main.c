@@ -46,7 +46,6 @@ typedef struct
     float totalIncome;
     float totalDiscountGiven;
     Sale sales[MAX_MODEL];
-    //char customerNames[MAX_MODEL][101]; // 2D array: stores up to MAX_SALES names, each up to 100 chars (+1 for '\0')
 } Statistics;
 
 
@@ -69,7 +68,7 @@ Car carsOnSale[MAX_MODEL] = {
     {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carStock = 1},
     {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carStock = 2},
     {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carStock = 3},
-    //{.carModel = "Abc", .carYear = 2016, .carPrice = 6400, .carStock = 1}
+    //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
 };
 
 unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
@@ -421,6 +420,7 @@ int main(void)
                     printf("Please check back later when we restock.\n");
                     break; // goes back to menu
                 }
+                sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                 carsOnSaleList(false);
 
                 printf("\nCurrently, we have %hu cars in stock.\n", statistics.carsInStock);
