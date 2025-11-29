@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h> // toupper(), tolower(), isAlpha
 #include <stdbool.h>
-#include <time.h> //localtime fonksiyonu burada tanimli
+#include <time.h> //localtime function
 
 #define DISCOUNT_MIN_AGE 20
 #define DISCOUNT_MAX_AGE 25
@@ -15,6 +15,61 @@
 #define MENU_OPTION_EXIT 4
 #define MAX_MODEL 100
 #define CAR_WANTED 1
+// File
+#define CSV_FILE "salesData.csv"
+#define FILE_OPENED 0
+#define FILE_CLOSED 1
+#define FILE_ERROR 2
+
+FILE *file;
+unsigned char fileStatus = FILE_CLOSED;// file starts closed because no file is open yet
+
+FILE *createFile(char *fileName)
+{
+    file = fopen(fileName, "w");// creates the file or resets it if it already exists
+
+    if (file != NULL) // if the file created, file will not be NULL
+    {
+        fclose(file);
+    }
+    return file;
+}
+
+// Tries to open the file, creates it if needed, then retries opening.
+void openFile(char *fileName, char *mode)
+{
+    file = fopen(fileName, mode); // first try to open as normal
+
+    if (file == NULL)// if file is not open
+    {
+        if (createFile(fileName) == NULL) // will try to create file and if unsuccesuful == NULL
+        {
+            fileStatus = FILE_ERROR;
+        }
+        else
+        {
+            openFile(fileName, mode); // if file created, function calling itself (recursive)
+        }
+    }
+    else
+    {
+        fileStatus = FILE_OPENED;
+    }
+}
+
+// if the file is open, this function closes it. if it is not open, it does nothing.
+void closeFile()
+{
+    if (fileStatus == FILE_OPENED)
+    {
+        fclose(file);
+        fileStatus = FILE_CLOSED;
+    }
+}
+
+
+
+
 
 unsigned short menuOption = 0, selectedId = 0;
 char membership;
@@ -138,6 +193,18 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
 
 
     stats->numberOfSales++; // increase number of sales after each successful sale
+}
+
+int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model, unsigned short year)
+{
+    for (unsigned short i = 0; i < capacity; i++)
+    {
+        if (carsOnsale[i].carModel[0] != '\0' && carsOnsale[i].carYear == year && strcmp(carsOnsale[i].carModel, model) == 0)
+        {
+            return i;
+        }
+    }
+    return -1; // means not found. No array ever has index (-1)
 }
 
 void clearScreen(void)
