@@ -21,12 +21,74 @@
 #define FILE_CLOSED 1
 #define FILE_ERROR 2
 
-FILE *file;
-unsigned char fileStatus = FILE_CLOSED;// file starts closed because no file is open yet
+FILE* file;
+unsigned char fileStatus = FILE_CLOSED; // file starts closed because no file is open yet
 
-FILE *createFile(char *fileName)
+unsigned short menuOption = 0, selectedId = 0;
+char membership;
+bool validName;
+
+
+typedef struct
 {
-    file = fopen(fileName, "w");// creates the file or resets it if it already exists
+    char currentCustomerName[101];
+    unsigned short currentCustomerAge;
+    bool currentCustomerIsMember;
+} Customer; // represents current active user
+
+typedef struct
+{
+    char customerName[101];
+    unsigned short customerAge;
+    char carModel[101];
+    unsigned short carYear;
+    float finalPrice;
+    float discountAmount;
+    char discountType[51]; // "No_discount", "Age", "Membership", "Age_And_Membership"
+    time_t saleDate;
+    unsigned short customerFeedbackRating; // 1 to 5
+    char customerFeedback[201];
+} Sale; // represents a single completed sale (used for statistics)
+
+Customer currentCustomer = {0};
+
+typedef struct
+{
+    unsigned short carsInStock;
+    unsigned short numberOfSales;
+    float totalIncome;
+    float totalDiscountGiven;
+    Sale sales[MAX_MODEL];
+} Statistics;
+
+Statistics statistics = {0};
+
+
+typedef struct
+{
+    char carModel[101];
+    unsigned short carYear;
+    float carPrice;
+    unsigned short carStock;
+} Car;
+
+Car carsOnSale[MAX_MODEL] = {
+    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carStock = 3},
+    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carStock = 2},
+    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carStock = 1},
+    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carStock = 1},
+    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carStock = 4},
+    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carStock = 2},
+    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carStock = 1},
+    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carStock = 1},
+    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carStock = 2},
+    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carStock = 3},
+    //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
+};
+
+FILE* createFile(char* fileName)
+{
+    file = fopen(fileName, "w"); // creates the file or resets it if it already exists
 
     if (file != NULL) // if the file created, file will not be NULL
     {
@@ -36,11 +98,11 @@ FILE *createFile(char *fileName)
 }
 
 // Tries to open the file, creates it if needed, then retries opening.
-void openFile(char *fileName, char *mode)
+void openFile(char* fileName, char* mode)
 {
     file = fopen(fileName, mode); // first try to open as normal
 
-    if (file == NULL)// if file is not open
+    if (file == NULL) // if file is not open
     {
         if (createFile(fileName) == NULL) // will try to create file and if unsuccesuful == NULL
         {
@@ -67,66 +129,106 @@ void closeFile()
     }
 }
 
-
-
-
-
-unsigned short menuOption = 0, selectedId = 0;
-char membership;
-bool validName;
-
-typedef struct
+void readDataFromFile(Statistics *stats)
 {
-    char currentCustomerName[101];
-    unsigned short currentCustomerAge;
-    bool currentCustomerIsMember;
-} Customer; // represents current active user
+    int lineCounter = 0;
+    stats->numberOfSales = 0;
+    stats->totalIncome = 0.0f;
+    stats->totalDiscountGiven = 0.0f;
 
-typedef struct
+    while (1)
+    {
+        if (lineCounter >= MAX_MODEL)
+        {
+            printf("Maximum number of sales reached. No more sales can be recorded.\n");
+            break;
+        }
+
+        Sale *sale = &stats->sales[lineCounter];
+        long saleDateLong = 0;
+
+        int scanResult = fscanf(
+            file,
+            " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %ld %hu \"%200[^\"]\"",
+            sale->customerName,
+            &sale->customerAge,
+            sale->carModel,
+            &sale->carYear,
+            &sale->finalPrice,
+            &sale->discountAmount,
+            sale->discountType,
+            &saleDateLong,
+            &sale->customerFeedbackRating,
+            sale->customerFeedback
+        );
+
+        if (scanResult == EOF)
+        {
+            break;
+        }
+
+        sale->saleDate = saleDateLong;
+
+        stats->totalIncome += sale->finalPrice;
+        stats->totalDiscountGiven += sale->discountAmount;
+
+        lineCounter++;
+
+    }
+    stats->numberOfSales = lineCounter;
+}
+
+void getDataFromFile()
 {
-    char customerName[101];
-    unsigned short customerAge;
-    char carModel[101];
-    unsigned short carYear;
-    float finalPrice;
-    float discountAmount;
-    char discountType[51]; // "No discount", "Age", "Membership", "Age + Membership"
-    time_t saleDate;
-    unsigned short customerFeedbackRating; // 1 to 5
-    char customerFeedback[201];
-} Sale; // represents a single completed sale (used for statistics)
+    openFile(CSV_FILE, "r");
+    if (fileStatus == FILE_OPENED)
+    {
+        readDataFromFile(&statistics);
+    }
+    else if (fileStatus == FILE_ERROR)
+    {
+        printf("There was an error trying to read from the file %s.", CSV_FILE);
+        getchar();
+        getchar();
+    }
+    closeFile();
+}
 
-typedef struct
+void writeDataToFile()
 {
-    unsigned short carsInStock;
-    unsigned short numberOfSales;
-    float totalIncome;
-    float totalDiscountGiven;
-    Sale sales[MAX_MODEL];
-} Statistics;
+    for (unsigned short i = 0; i < statistics.numberOfSales; i++)
+    {
+        Sale *sale = &statistics.sales[i];
+        fprintf(file, "\"%s\" %hu \"%s\" %hu %.2f %.2f %s %ld %hu \"%s\"\n",
+                sale->customerName,
+                sale->customerAge,
+                sale->carModel,
+                sale->carYear,
+                sale->finalPrice,
+                sale->discountAmount,
+                sale->discountType,
+                (long)sale->saleDate,
+                sale->customerFeedbackRating,
+                sale->customerFeedback
+        );
+    }
+}
 
+void saveDataToFile() {
+    openFile(CSV_FILE, "w");
 
-typedef struct
-{
-    char carModel[101];
-    unsigned short carYear;
-    float carPrice;
-    unsigned short carStock;
-} Car;
+    if (fileStatus == FILE_OPENED) {
+        writeDataToFile();
+    }
+    else if (fileStatus == FILE_ERROR) {
+        printf("There was an error trying to write to the file %s.", CSV_FILE);
+        getchar();
+        getchar();
+    }
 
-Car carsOnSale[MAX_MODEL] = {
-    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carStock = 3},
-    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carStock = 2},
-    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carStock = 1},
-    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carStock = 1},
-    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carStock = 4},
-    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carStock = 2},
-    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carStock = 1},
-    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carStock = 1},
-    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carStock = 2},
-    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carStock = 3},
-    //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
-};
+    closeFile();
+}
+
 
 unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
 {
@@ -175,11 +277,11 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
 
     if (discountThisSale == 0.0f)
     {
-        strcpy(stats->sales[s].discountType, "No discount");
+        strcpy(stats->sales[s].discountType, "No_discount");
     }
     else if (ageDiscountApplied && membershipDiscountApplied)
     {
-        strcpy(stats->sales[s].discountType, "Age + Membership");
+        strcpy(stats->sales[s].discountType, "Age_And_Membership");
     }
     else if (ageDiscountApplied)
     {
@@ -199,7 +301,8 @@ int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model
 {
     for (unsigned short i = 0; i < capacity; i++)
     {
-        if (carsOnsale[i].carModel[0] != '\0' && carsOnsale[i].carYear == year && strcmp(carsOnsale[i].carModel, model) == 0)
+        if (carsOnsale[i].carModel[0] != '\0' && carsOnsale[i].carYear == year && strcmp(carsOnsale[i].carModel, model)
+            == 0)
         {
             return i;
         }
@@ -446,19 +549,19 @@ void getCustomerFeedback(Sale* saleFeedback)
     printf("\nThank you for your feedback!\n");
 }
 
-void captureValueAndValidate(unsigned short *value, unsigned short min, unsigned short max)
+void captureValueAndValidate(unsigned short* value, unsigned short min, unsigned short max)
 {
     do
     {
-        int capturedValue= scanf("%hu", value);
+        int capturedValue = scanf("%hu", value);
         clearBuffer();
         if (capturedValue == 1 && *value >= min && *value <= max)
         {
             break;
         }
         printf("Please enter a valid value between %hu and %hu: ", min, max);
-    }while (1);
-
+    }
+    while (1);
 }
 
 /*char captureYesOrNo(char *input)
@@ -475,13 +578,17 @@ void captureValueAndValidate(unsigned short *value, unsigned short min, unsigned
     }
 }*/
 
+
+
+
 int main(void)
 {
-    Customer currentCustomer = {0};
-    Statistics statistics = {.carsInStock = calculateTotalStock(carsOnSale, MAX_MODEL)};
-
 
     system("color 0E"); // black background, yellow text
+
+    getDataFromFile();
+
+    statistics.carsInStock = calculateTotalStock(carsOnSale, MAX_MODEL);
 
     do
     {
@@ -504,7 +611,7 @@ int main(void)
             showMenu();
             printf("\nPlease choose an option between 1-4 %s: ", currentCustomer.currentCustomerName);
 
-            captureValueAndValidate(&menuOption,1,4);
+            captureValueAndValidate(&menuOption, 1, 4);
 
             clearScreen();
 
@@ -577,7 +684,8 @@ int main(void)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
                            currentCustomer.currentCustomerName);
-                    menuOption = MENU_OPTION_EXIT; // eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    menuOption = MENU_OPTION_EXIT;// eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    saveDataToFile();
                     break; // exits switch, goes back to do while
                 }
 
@@ -641,12 +749,13 @@ int main(void)
 
                 customersFeedbackRating();
 
-                captureValueAndValidate(&statistics.sales[statistics.numberOfSales-1].customerFeedbackRating, 1, 5);
+                captureValueAndValidate(&statistics.sales[statistics.numberOfSales - 1].customerFeedbackRating, 1, 5);
 
 
                 getCustomerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
 
                 menuOption = MENU_OPTION_EXIT; // end the menu session for this customer
+                saveDataToFile();
                 break; // buying options finished
 
 
@@ -702,6 +811,7 @@ int main(void)
                        ? "\n\nPress Enter ..."
                        : "\n\nPress Enter to return to the Menu...");
 
+            saveDataToFile();
             getchar(); // waits an entry from user
             clearScreen();
         }
