@@ -86,6 +86,13 @@ Car carsOnSale[MAX_MODEL] = {
     //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
 };
 
+typedef enum
+{
+    SORT_PRICE,
+    SORT_YEAR,
+    SORT_STOCK
+} SortType;
+
 FILE* createFile(char* fileName)
 {
     file = fopen(fileName, "w"); // creates the file or resets it if it already exists
@@ -427,15 +434,32 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
     return selectedId;
 }
 
-void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
+void sortAscending(Car carsOnSale[], unsigned short capacity, SortType type)
 {
     clearScreen();
-    printf("\nSorting by price descending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
+    for (int i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i + 1; j < capacity; j++)
+        for (int j = i + 1; j < capacity; j++)
         {
-            if (carsOnSale[i].carPrice < carsOnSale[j].carPrice)
+            float leftValue; // float because of the price
+            float rightValue;
+
+            if (type == SORT_PRICE)
+            {
+                leftValue = carsOnSale[i].carPrice;
+                rightValue = carsOnSale[j].carPrice;
+            }
+            else if (type == SORT_STOCK)
+            {
+                leftValue = carsOnSale[i].carStock;
+                rightValue = carsOnSale[j].carStock;
+            }
+            else if (type == SORT_YEAR)
+            {
+                leftValue = carsOnSale[i].carYear;
+                rightValue = carsOnSale[j].carYear;
+            }
+            if (leftValue > rightValue)
             {
                 Car temp = carsOnSale[i];
                 carsOnSale[i] = carsOnSale[j];
@@ -445,87 +469,32 @@ void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
     }
 }
 
-void sortByPriceAscending(Car carsOnSale[], unsigned short capacity)
+void sortDescending(Car carsOnSale[], unsigned short capacity, SortType type)
 {
     clearScreen();
-    printf("\nSorting by price ascending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
+    for (int i = 0; i < capacity - 1; i++)
     {
-        for (unsigned short j = i + 1; j < capacity; j++)
+        for (int j = i + 1; j < capacity; j++)
         {
-            if (carsOnSale[i].carPrice > carsOnSale[j].carPrice)
-            {
-                Car temp = carsOnSale[i];
-                carsOnSale[i] = carsOnSale[j];
-                carsOnSale[j] = temp;
-            }
-        }
-    }
-}
+            float leftValue; // float because of the price
+            float rightValue;
 
-void sortByStockDescending(Car carsOnSale[], unsigned short capacity)
-{
-    clearScreen();
-    printf("\nSorting by stock descending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
-    {
-        for (unsigned short j = i + 1; j < capacity; j++)
-        {
-            if (carsOnSale[i].carStock < carsOnSale[j].carStock)
+            if (type == SORT_PRICE)
             {
-                Car temp = carsOnSale[i];
-                carsOnSale[i] = carsOnSale[j];
-                carsOnSale[j] = temp;
+                leftValue = carsOnSale[i].carPrice;
+                rightValue = carsOnSale[j].carPrice;
             }
-        }
-    }
-}
-
-void sortByStockAscending(Car carsOnSale[], unsigned short capacity)
-{
-    clearScreen();
-    printf("\nSorting by stock ascending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
-    {
-        for (unsigned short j = i + 1; j < capacity; j++)
-        {
-            if (carsOnSale[i].carStock > carsOnSale[j].carStock)
+            else if (type == SORT_STOCK)
             {
-                Car temp = carsOnSale[i];
-                carsOnSale[i] = carsOnSale[j];
-                carsOnSale[j] = temp;
+                leftValue = carsOnSale[i].carStock;
+                rightValue = carsOnSale[j].carStock;
             }
-        }
-    }
-}
-
-void sortByYearDescending(Car carsOnSale[], unsigned short capacity)
-{
-    clearScreen();
-    printf("\nSorting by year descending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
-    {
-        for (unsigned short j = i + 1; j < capacity; j++)
-        {
-            if (carsOnSale[i].carYear < carsOnSale[j].carYear)
+            else if (type == SORT_YEAR)
             {
-                Car temp = carsOnSale[i];
-                carsOnSale[i] = carsOnSale[j];
-                carsOnSale[j] = temp;
+                leftValue = carsOnSale[i].carYear;
+                rightValue = carsOnSale[j].carYear;
             }
-        }
-    }
-}
-
-void sortByYearAscending(Car carsOnSale[], unsigned short capacity)
-{
-    clearScreen();
-    printf("\nSorting by year ascending...\n");
-    for (unsigned short i = 0; i < capacity - 1; i++)
-    {
-        for (unsigned short j = i + 1; j < capacity; j++)
-        {
-            if (carsOnSale[i].carYear > carsOnSale[j].carYear)
+            if (leftValue < rightValue)
             {
                 Car temp = carsOnSale[i];
                 carsOnSale[i] = carsOnSale[j];
@@ -628,22 +597,22 @@ int main(void)
                 switch (sortMenuOption)
                 {
                 case 1:
-                    sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_PRICE);
                     break;
                 case 2:
-                    sortByPriceAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_PRICE);
                     break;
                 case 3:
-                    sortByStockDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_STOCK);
                     break;
                 case 4:
-                    sortByStockAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_STOCK);
                     break;
                 case 5:
-                    sortByYearDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_YEAR);
                     break;
                 case 6:
-                    sortByYearAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    sortAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_YEAR);
                     break;
                 }
 
@@ -660,7 +629,8 @@ int main(void)
                     printf("Please check back later when we restock.\n");
                     break; // goes back to menu
                 }
-                sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                sortDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_PRICE);
+
                 carsOnSaleList(false);
 
                 printf("\nTotal cars in stock      : %hu\n", statistics.carsInStock);
