@@ -129,7 +129,7 @@ void closeFile()
     }
 }
 
-void readDataFromFile(Statistics *stats)
+void readDataFromFile(Statistics* stats)
 {
     int lineCounter = 0;
     stats->numberOfSales = 0;
@@ -144,7 +144,7 @@ void readDataFromFile(Statistics *stats)
             break;
         }
 
-        Sale *sale = &stats->sales[lineCounter];
+        Sale* sale = &stats->sales[lineCounter];
         long saleDateLong = 0;
 
         int scanResult = fscanf(
@@ -173,7 +173,6 @@ void readDataFromFile(Statistics *stats)
         stats->totalDiscountGiven += sale->discountAmount;
 
         lineCounter++;
-
     }
     stats->numberOfSales = lineCounter;
 }
@@ -198,7 +197,7 @@ void writeDataToFile()
 {
     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
     {
-        Sale *sale = &statistics.sales[i];
+        Sale* sale = &statistics.sales[i];
         fprintf(file, "\"%s\" %hu \"%s\" %hu %.2f %.2f %s %ld %hu \"%s\"\n",
                 sale->customerName,
                 sale->customerAge,
@@ -214,13 +213,16 @@ void writeDataToFile()
     }
 }
 
-void saveDataToFile() {
+void saveDataToFile()
+{
     openFile(CSV_FILE, "w");
 
-    if (fileStatus == FILE_OPENED) {
+    if (fileStatus == FILE_OPENED)
+    {
         writeDataToFile();
     }
-    else if (fileStatus == FILE_ERROR) {
+    else if (fileStatus == FILE_ERROR)
+    {
         printf("There was an error trying to write to the file %s.", CSV_FILE);
         getchar();
         getchar();
@@ -427,6 +429,8 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
 
 void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
 {
+    clearScreen();
+    printf("\nSorting by price descending...\n");
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
         for (unsigned short j = i + 1; j < capacity; j++)
@@ -443,6 +447,8 @@ void sortByPriceDescending(Car carsOnSale[], unsigned short capacity)
 
 void sortByPriceAscending(Car carsOnSale[], unsigned short capacity)
 {
+    clearScreen();
+    printf("\nSorting by price ascending...\n");
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
         for (unsigned short j = i + 1; j < capacity; j++)
@@ -459,6 +465,8 @@ void sortByPriceAscending(Car carsOnSale[], unsigned short capacity)
 
 void sortByStockDescending(Car carsOnSale[], unsigned short capacity)
 {
+    clearScreen();
+    printf("\nSorting by stock descending...\n");
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
         for (unsigned short j = i + 1; j < capacity; j++)
@@ -475,11 +483,49 @@ void sortByStockDescending(Car carsOnSale[], unsigned short capacity)
 
 void sortByStockAscending(Car carsOnSale[], unsigned short capacity)
 {
+    clearScreen();
+    printf("\nSorting by stock ascending...\n");
     for (unsigned short i = 0; i < capacity - 1; i++)
     {
         for (unsigned short j = i + 1; j < capacity; j++)
         {
             if (carsOnSale[i].carStock > carsOnSale[j].carStock)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
+
+void sortByYearDescending(Car carsOnSale[], unsigned short capacity)
+{
+    clearScreen();
+    printf("\nSorting by year descending...\n");
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i + 1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carYear < carsOnSale[j].carYear)
+            {
+                Car temp = carsOnSale[i];
+                carsOnSale[i] = carsOnSale[j];
+                carsOnSale[j] = temp;
+            }
+        }
+    }
+}
+
+void sortByYearAscending(Car carsOnSale[], unsigned short capacity)
+{
+    clearScreen();
+    printf("\nSorting by year ascending...\n");
+    for (unsigned short i = 0; i < capacity - 1; i++)
+    {
+        for (unsigned short j = i + 1; j < capacity; j++)
+        {
+            if (carsOnSale[i].carYear > carsOnSale[j].carYear)
             {
                 Car temp = carsOnSale[i];
                 carsOnSale[i] = carsOnSale[j];
@@ -495,23 +541,8 @@ void showSortMenu(void)
     printf("2. Price ascending\n");
     printf("3. Stock descending\n");
     printf("4. Stock ascending\n");
-}
-
-void sortMenuOptionValidation(unsigned short* sortMenuOption)
-{
-    do
-    {
-        scanf(" %hu", sortMenuOption);
-        clearBuffer();
-        if (*sortMenuOption < 1 || *sortMenuOption > 4)
-        {
-            clearScreen();
-            showBanner();
-            showSortMenu();
-            printf("Invalid option. Please choose between 1-4: ");
-        }
-    }
-    while (*sortMenuOption < 1 || *sortMenuOption > 4);
+    printf("5. Year descending\n");
+    printf("6. Year ascending\n");
 }
 
 void customersFeedbackRating()
@@ -524,21 +555,6 @@ void customersFeedbackRating()
     printf("1 *      (Very Poor)\n");
     printf("Your choice (1-5): ");
 }
-
-/*void customerFeedbackRatingValidation()
-{
-    do
-    {
-        scanf(" %hu", &customerFeedbackRating);
-        clearBuffer();
-        if (customerFeedbackRating < 1 || customerFeedbackRating > 5)
-        {
-            clearScreen();
-            printf("Invalid rating. Please choose a rating between 1-5: ");
-            customerFeedbackRating();
-        }
-    }while (customerFeedbackRating < 1 || customerFeedbackRating > 5);
-}*/
 
 void getCustomerFeedback(Sale* saleFeedback)
 {
@@ -564,26 +580,9 @@ void captureValueAndValidate(unsigned short* value, unsigned short min, unsigned
     while (1);
 }
 
-/*char captureYesOrNo(char *input)
-{
-
-    int result = scanf(" %c", input); //
-    clearBuffer();
-
-    *input = toupper(*input);
-
-    if (result ==1 && *input == 'Y')
-    {
-        return 'Y';
-    }
-}*/
-
-
-
 
 int main(void)
 {
-
     system("color 0E"); // black background, yellow text
 
     getDataFromFile();
@@ -624,29 +623,27 @@ int main(void)
                 showBanner();
                 showSortMenu();
                 printf("How would you like to sort the cars on sale: ");
-                sortMenuOptionValidation(&sortMenuOption);
+                captureValueAndValidate(&sortMenuOption, 1, 6);
 
                 switch (sortMenuOption)
                 {
                 case 1:
-                    clearScreen();
-                    printf("\nSorting by price descending...\n");
                     sortByPriceDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 2:
-                    clearScreen();
-                    printf("\nSorting by price ascending...\n");
                     sortByPriceAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 3:
-                    clearScreen();
-                    printf("\nSorting by stock descending...\n");
                     sortByStockDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 case 4:
-                    clearScreen();
-                    printf("\nSorting by stock ascending...\n");
                     sortByStockAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                case 5:
+                    sortByYearDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
+                    break;
+                case 6:
+                    sortByYearAscending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL));
                     break;
                 }
 
@@ -684,7 +681,7 @@ int main(void)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
                            currentCustomer.currentCustomerName);
-                    menuOption = MENU_OPTION_EXIT;// eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    menuOption = MENU_OPTION_EXIT; // eger exit olmazsa, yasi kucuk kullanici sistemde kalir
                     saveDataToFile();
                     break; // exits switch, goes back to do while
                 }
@@ -770,11 +767,12 @@ int main(void)
                     printf("No customers served yet.\n");
                     break;
                 }
-                printf("%-3s %-15s %-5s %-18s %-6s %-18s %-12s %-20s\n",
+                printf("%-3s %-15s %-5s %-18s %-6s %-18s %-12s %-12s %-20s\n",
                        "No", "Customer", "Age", "Car Model", "Year",
-                       "Discount Type", "Disc GBP", "Date / Time");
+                       "Discount Type", "Disc GBP", "Final GBP", "Date / Time");
                 printf(
                     "---------------------------------------------------------------------------------------------------------------\n");
+
 
                 for (unsigned short i = 0; i < statistics.numberOfSales; i++)
                 {
@@ -784,7 +782,7 @@ int main(void)
                     struct tm* localTime = localtime(&s.saleDate);
                     strftime(timeOnSale, sizeof(timeOnSale), "%d/%m/%Y %H:%M:%S", localTime);
 
-                    printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-20s\n",
+                    printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-12.2f %-20s\n",
                            i + 1,
                            s.customerName,
                            s.customerAge,
@@ -792,6 +790,7 @@ int main(void)
                            s.carYear,
                            s.discountType,
                            s.discountAmount,
+                           s.finalPrice,
                            timeOnSale);
                     printf("    Rating : %hu/5\n", s.customerFeedbackRating);
                     if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
@@ -801,11 +800,71 @@ int main(void)
 
                     printf(
                         "---------------------------------------------------------------------------------------------------------------\n");
+
                 }
 
+                printf("\n=== Total Sales Per Model ===\n");
+                printf("%-20s %-6s %-12s %-12s\n", "Model", "Year", "Units", "Total GBP");
+                printf("-------------------------------------------------------------\n");
+
+                unsigned short modelCount = countCarModels(carsOnSale, MAX_MODEL);
+
+                unsigned short units[MAX_MODEL] = {0};
+                float revenue[MAX_MODEL] = {0.0f};
+
+                for (unsigned short i = 0; i < modelCount; i++)
+                {
+                    for (unsigned short s = 0; s < statistics.numberOfSales; s++)
+                    {
+                        Sale* sale = &statistics.sales[s];
+
+                        // if model and year matches
+                        if (strcmp(sale->carModel, carsOnSale[i].carModel) == 0 &&
+                            sale->carYear == carsOnSale[i].carYear)
+                        {
+                            units[i]++;
+                            revenue[i] += sale->finalPrice;
+                        }
+                    }
+                }
+                    for (unsigned short i = 0; i < modelCount -1; i++)
+                    {
+                        for (unsigned short j = i + 1; j < modelCount; j++)
+                        {
+                            if (revenue[i] < revenue[j])
+                            {
+                                // revenue swap
+                                float tempR = revenue[i];
+                                revenue[i] = revenue[j];
+                                revenue[j] = tempR;
+
+                                // units swap
+                                unsigned short tempU = units[i];
+                                units[i] = units[j];
+                                units[j] = tempU;
+
+                                // carsOnSale swap
+                                Car tempC = carsOnSale[i];
+                                carsOnSale[i] = carsOnSale[j];
+                                carsOnSale[j] = tempC;
+                            }
+                        }
+                    }
+                    for (unsigned short i = 0; i < modelCount; i++)
+                    {
+                        if (units[i] == 0)
+                            continue;
+
+                        printf("%-20s %-6hu %-12hu %-12.2f\n",
+                           carsOnSale[i].carModel,
+                           carsOnSale[i].carYear,
+                           units[i],
+                           revenue[i]);
+                    }
+                printf(
+                    "---------------------------------------------------------------------------------------------------------------\n");
                 break;
             }
-
 
             printf(menuOption == MENU_OPTION_EXIT
                        ? "\n\nPress Enter ..."
