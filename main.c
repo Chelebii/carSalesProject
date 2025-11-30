@@ -791,7 +791,7 @@ int main(void)
                            timeOnSale);
                     printf("    Rating : %hu/5\n", s.customerFeedbackRating);
                     if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
-                        printf("    Comment: %s\n", s.customerFeedback);
+                        printf("    Comment: %s", s.customerFeedback);
                     else
                         printf("    Comment: (no comment)\n");
 
