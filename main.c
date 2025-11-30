@@ -13,7 +13,7 @@
 #define MENU_OPTION_BUY_CAR 2
 #define MENU_OPTION_SALE_STATS 3
 #define MENU_OPTION_EXIT 4
-#define MAX_MODEL 100
+#define MAX_MODEL 100 // maximum number of car models and also max stored sales
 #define CAR_WANTED 1
 // File
 #define CSV_FILE "salesData.csv"
@@ -42,7 +42,7 @@ typedef struct
     unsigned short customerAge;
     char carModel[101];
     unsigned short carYear;
-    float finalPrice;
+    float finalPrice; // final price after discounts
     float discountAmount;
     char discountType[51]; // "No_discount", "Age", "Membership", "Age_And_Membership"
     time_t saleDate;
@@ -56,9 +56,9 @@ typedef struct
 {
     unsigned short carsInStock;
     unsigned short numberOfSales;
-    float totalIncome;
+    float totalIncome; // total income from all sales
     float totalDiscountGiven;
-    Sale sales[MAX_MODEL];
+    Sale sales[MAX_MODEL]; // array storing individual sales (up to MAX_MODEL)
 } Statistics;
 
 Statistics statistics = {0};
@@ -66,23 +66,23 @@ Statistics statistics = {0};
 
 typedef struct
 {
-    char carModel[101];
-    unsigned short carYear;
+    char carModelName[101];
+    unsigned short carModelYear;
     float carPrice;
     unsigned short carStock;
 } Car;
 
 Car carsOnSale[MAX_MODEL] = {
-    {.carModel = "Ford Fiesta", .carYear = 2017, .carPrice = 4800, .carStock = 3},
-    {.carModel = "Toyota Corolla", .carYear = 2016, .carPrice = 6000, .carStock = 2},
-    {.carModel = "Volkswagen Golf", .carYear = 2015, .carPrice = 5900, .carStock = 1},
-    {.carModel = "Hyundai i30", .carYear = 2016, .carPrice = 5000, .carStock = 1},
-    {.carModel = "Kia Ceed", .carYear = 2017, .carPrice = 5400, .carStock = 4},
-    {.carModel = "BMW 320d", .carYear = 2014, .carPrice = 6900, .carStock = 2},
-    {.carModel = "Mercedes A180", .carYear = 2015, .carPrice = 7100, .carStock = 1},
-    {.carModel = "Audi A3", .carYear = 2015, .carPrice = 7300, .carStock = 1},
-    {.carModel = "Nissan Qashqai", .carYear = 2015, .carPrice = 6200, .carStock = 2},
-    {.carModel = "Honda Civic", .carYear = 2016, .carPrice = 6400, .carStock = 3},
+    {.carModelName = "Ford Fiesta", .carModelYear = 2017, .carPrice = 4800, .carStock = 3},
+    {.carModelName = "Toyota Corolla", .carModelYear = 2016, .carPrice = 6000, .carStock = 2},
+    {.carModelName = "Volkswagen Golf", .carModelYear = 2015, .carPrice = 5900, .carStock = 1},
+    {.carModelName = "Hyundai i30", .carModelYear = 2016, .carPrice = 5000, .carStock = 1},
+    {.carModelName = "Kia Ceed", .carModelYear = 2017, .carPrice = 5400, .carStock = 4},
+    {.carModelName = "BMW 320d", .carModelYear = 2014, .carPrice = 6900, .carStock = 2},
+    {.carModelName = "Mercedes A180", .carModelYear = 2015, .carPrice = 7100, .carStock = 1},
+    {.carModelName = "Audi A3", .carModelYear = 2015, .carPrice = 7300, .carStock = 1},
+    {.carModelName = "Nissan Qashqai", .carModelYear = 2015, .carPrice = 6200, .carStock = 2},
+    {.carModelName = "Honda Civic", .carModelYear = 2016, .carPrice = 6400, .carStock = 3},
     //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
 };
 
@@ -95,13 +95,13 @@ typedef enum
 
 FILE* createFile(char* fileName)
 {
-    file = fopen(fileName, "w"); // creates the file or resets it if it already exists
+    file = fopen(fileName, "w"); // creates the file or resets it if it is already exists
 
     if (file != NULL) // if the file created, file will not be NULL
     {
         fclose(file);
     }
-    return file;
+    return file; // return NULL if creation failed, non NULL if success
 }
 
 // Tries to open the file, creates it if needed, then retries opening.
@@ -136,27 +136,32 @@ void closeFile()
     }
 }
 
+// reads all sales data from the already opened global FILE *file into Statistics and recalculates
 void readDataFromFile(Statistics* stats)
 {
-    int lineCounter = 0;
+    int lineCounter = 0; // counts how many sales have been read from the file
     stats->numberOfSales = 0;
     stats->totalIncome = 0.0f;
     stats->totalDiscountGiven = 0.0f;
 
     while (1)
     {
-        if (lineCounter >= MAX_MODEL)
+        if (lineCounter >= MAX_MODEL) // Prevents reading more lines
         {
             printf("Maximum number of sales reached. No more sales can be recorded.\n");
             break;
         }
 
+        // Pointer to the next Sale slot inside the Statistics struct
         Sale* sale = &stats->sales[lineCounter];
-        long saleDateLong = 0;
 
+        // used long long to read timestamp correctly.
+        long long saleDate = 0;
+
+        //  "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space
         int scanResult = fscanf(
             file,
-            " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %ld %hu \"%200[^\"]\"",
+            " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %lld %hu \"%200[^\"]\"",
             sale->customerName,
             &sale->customerAge,
             sale->carModel,
@@ -164,26 +169,30 @@ void readDataFromFile(Statistics* stats)
             &sale->finalPrice,
             &sale->discountAmount,
             sale->discountType,
-            &saleDateLong,
+            &saleDate,
             &sale->customerFeedbackRating,
             sale->customerFeedback
         );
-
+        // If reached end of file or there was an error it stops reading
         if (scanResult == EOF)
         {
             break;
         }
 
-        sale->saleDate = saleDateLong;
+        // Store the read timestamp into the struct as time_t
+        sale->saleDate = saleDate;
 
+        // Update totals using the sale just read
         stats->totalIncome += sale->finalPrice;
         stats->totalDiscountGiven += sale->discountAmount;
 
-        lineCounter++;
+        lineCounter++;// Move to the next sale
     }
+    // After reading all lines, store how many sales successfully read
     stats->numberOfSales = lineCounter;
 }
 
+// Opens the CSV file in read mode and loads sales data into statistics
 void getDataFromFile()
 {
     openFile(CSV_FILE, "r");
@@ -200,12 +209,13 @@ void getDataFromFile()
     closeFile();
 }
 
+// Writes all sales from the 'statistics' variable into the opened FILE *file.
 void writeDataToFile()
 {
     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
     {
         Sale* sale = &statistics.sales[i];
-        fprintf(file, "\"%s\" %hu \"%s\" %hu %.2f %.2f %s %ld %hu \"%s\"\n",
+        fprintf(file, "\"%s\" %hu \"%s\" %hu %.2f %.2f %s %lld %hu \"%s\"\n",
                 sale->customerName,
                 sale->customerAge,
                 sale->carModel,
@@ -213,13 +223,14 @@ void writeDataToFile()
                 sale->finalPrice,
                 sale->discountAmount,
                 sale->discountType,
-                (long)sale->saleDate,
+                (long long)sale->saleDate,// time_t on this system is implemented as long long.
                 sale->customerFeedbackRating,
                 sale->customerFeedback
         );
     }
 }
 
+// Opens file in write mode and saves current statistics to memory
 void saveDataToFile()
 {
     openFile(CSV_FILE, "w");
@@ -238,13 +249,13 @@ void saveDataToFile()
     closeFile();
 }
 
-
+// Counts how many car models are actually in use
 unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
 {
     unsigned short count = 0;
     for (unsigned short i = 0; i < capacity; i++)
     {
-        if (carsOnSale[i].carModel[0] != '\0')
+        if (carsOnSale[i].carModelName[0] != '\0')
         {
             count++;
         }
@@ -252,6 +263,7 @@ unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
     return count;
 }
 
+// sum of all carStock values
 unsigned short calculateTotalStock(Car carsOnSale[], unsigned short capacity)
 {
     unsigned short totalStock = 0;
@@ -262,25 +274,27 @@ unsigned short calculateTotalStock(Car carsOnSale[], unsigned short capacity)
     printf("     Total stock: %31hu\n", totalStock);
     return totalStock;
 }
-
+// after successful sale updates statistics
 void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned short index, Customer* c,
                                float currentTotalPrice, bool ageDiscountApplied, bool membershipDiscountApplied)
 {
     stats->carsInStock -= CAR_WANTED;
-    carsOnSale[index].carStock--; // mark the car as sold
+    carsOnSale[index].carStock--; // decrease stock for the specific car model
 
-    stats->totalIncome += currentTotalPrice; // Total generated income
+    stats->totalIncome += currentTotalPrice; // add this sale's income to total income
 
     float discountThisSale = carsOnSale[index].carPrice - currentTotalPrice; //  given discount just for this sale
     stats->totalDiscountGiven += discountThisSale; // add this sale's discount to total discount
 
-    unsigned short s = stats->numberOfSales;
+    unsigned short s = stats->numberOfSales; // index where for storing the new sale
 
+    // copy customer information into the new sale entry
     strcpy(stats->sales[s].customerName, c->currentCustomerName);
     stats->sales[s].customerAge = c->currentCustomerAge;
 
-    strcpy(stats->sales[s].carModel, carsOnSale[index].carModel);
-    stats->sales[s].carYear = carsOnSale[index].carYear;
+    // copy car information into the new sale entry
+    strcpy(stats->sales[s].carModel, carsOnSale[index].carModelName);
+    stats->sales[s].carYear = carsOnSale[index].carModelYear;
     stats->sales[s].finalPrice = currentTotalPrice;
     stats->sales[s].discountAmount = discountThisSale;
 
@@ -300,7 +314,8 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
     {
         strcpy(stats->sales[s].discountType, "Membership");
     }
-    time(&stats->sales[s].saleDate);
+
+    time(&stats->sales[s].saleDate);// storing the current time for this sale
 
 
     stats->numberOfSales++; // increase number of sales after each successful sale
@@ -310,10 +325,10 @@ int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model
 {
     for (unsigned short i = 0; i < capacity; i++)
     {
-        if (carsOnsale[i].carModel[0] != '\0' && carsOnsale[i].carYear == year && strcmp(carsOnsale[i].carModel, model)
+        if (carsOnsale[i].carModelName[0] != '\0' && carsOnsale[i].carModelYear == year && strcmp(carsOnsale[i].carModelName, model)
             == 0)
         {
-            return i;
+            return i; // return index of matching car
         }
     }
     return -1; // means not found. No array ever has index (-1)
@@ -321,13 +336,13 @@ int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model
 
 void clearScreen(void)
 {
-    system("cls");
+    system("cls"); // for Windows
 }
 
 void clearBuffer(void)
 {
+    // clear the buffer and removes all leftover characters including the enter key
     while (getchar() != '\n');
-    // clear the buffer and removes all leftover characters including the Enter key
 }
 
 void carsOnSaleList(bool showSoldCars)
@@ -336,19 +351,21 @@ void carsOnSaleList(bool showSoldCars)
     printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Status");
     printf("-----------------------------------------------------------\n");
     for (unsigned short i = 0; i < MAX_MODEL; i++)
-        if (carsOnSale[i].carModel[0] != '\0')
+        if (carsOnSale[i].carModelName[0] != '\0')
         {
             printf("%-3hu  %-20s  %-6hu  %-10.2f  ",
                    i + 1,
-                   carsOnSale[i].carModel,
-                   carsOnSale[i].carYear,
+                   carsOnSale[i].carModelName,
+                   carsOnSale[i].carModelYear,
                    carsOnSale[i].carPrice);
             if (showSoldCars)
             {
+                // show how many units are left for this model
                 printf("%-10hu", carsOnSale[i].carStock);
             }
             else
             {
+                // show whether the car is still available or sold out
                 printf("%-10s", carsOnSale[i].carStock > 0 ? "Available" : "Sold");
             }
             printf("\n");
@@ -377,10 +394,9 @@ void nameValidation(Customer* c)
     do
     {
         clearScreen();
-        validName = true; // ilk seferde isim dogru olursa, dongu cikis sarti tamamlanir
+        validName = true; // assume name is valid initially
         for (int i = 0; c->currentCustomerName[i]; i++)
         {
-            // isalpha() requires unsigned char; prevents undefined behavior
             if (!isalpha(c->currentCustomerName[i]) && c->currentCustomerName[i] != ' ')
             {
                 showBanner();
@@ -395,6 +411,7 @@ void nameValidation(Customer* c)
     while (validName == false);
 }
 
+// first character uppercase, the rest lowercase.
 void nameToUpperCase(char* name)
 {
     name[0] = toupper(name[0]);
@@ -404,6 +421,7 @@ void nameToUpperCase(char* name)
     }
 }
 
+// Validates selected car ID by checking range and availability
 unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer* customer)
 {
     unsigned short selectedId = 0;
@@ -413,7 +431,7 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
         scanf("%hu", &selectedId);
         clearBuffer();
 
-
+        // check if ID is within valid range
         if (selectedId < 1 || selectedId > countCarModels(carsOnSale, MAX_MODEL))
         {
             clearScreen();
@@ -421,7 +439,9 @@ unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Custom
             printf("\nInvalid car ID. Please choose an available car ID: ");
             continue; // goes to the start of the loop, skips rest
         }
-        if (carsOnSale[selectedId - 1].carStock == 0) //Check if that car is already sold
+
+        //Check if that car is already sold
+        if (carsOnSale[selectedId - 1].carStock == 0)
         {
             printf("\nSorry, %s, this car is already sold!\n", customer->currentCustomerName);
             printf("Please choose another car: ");
@@ -456,8 +476,8 @@ void sortAscending(Car carsOnSale[], unsigned short capacity, SortType type)
             }
             else if (type == SORT_YEAR)
             {
-                leftValue = carsOnSale[i].carYear;
-                rightValue = carsOnSale[j].carYear;
+                leftValue = carsOnSale[i].carModelYear;
+                rightValue = carsOnSale[j].carModelYear;
             }
             if (leftValue > rightValue)
             {
@@ -491,8 +511,8 @@ void sortDescending(Car carsOnSale[], unsigned short capacity, SortType type)
             }
             else if (type == SORT_YEAR)
             {
-                leftValue = carsOnSale[i].carYear;
-                rightValue = carsOnSale[j].carYear;
+                leftValue = carsOnSale[i].carModelYear;
+                rightValue = carsOnSale[j].carModelYear;
             }
             if (leftValue < rightValue)
             {
@@ -528,6 +548,7 @@ void customersFeedbackRating()
 void getCustomerFeedback(Sale* saleFeedback)
 {
     printf("Please write a short comment or press Enter to skip:\n");
+
     //Reads a full line including spaces and prevents buffer overflow.
     fgets(saleFeedback->customerFeedback, sizeof(saleFeedback->customerFeedback), stdin);
 
@@ -542,7 +563,7 @@ void captureValueAndValidate(unsigned short* value, unsigned short min, unsigned
         clearBuffer();
         if (capturedValue == 1 && *value >= min && *value <= max)
         {
-            break;
+            break;// valid value, exit loop
         }
         printf("Please enter a valid value between %hu and %hu: ", min, max);
     }
@@ -552,9 +573,9 @@ void captureValueAndValidate(unsigned short* value, unsigned short min, unsigned
 
 int main(void)
 {
-    system("color 0E"); // black background, yellow text
+    system("color 0E"); // black background, yellow text for Windows
 
-    getDataFromFile();
+    getDataFromFile(); // load previous sales data from file into 'statistics'
 
     statistics.carsInStock = calculateTotalStock(carsOnSale, MAX_MODEL);
 
@@ -616,22 +637,24 @@ int main(void)
                     break;
                 }
 
-                carsOnSaleList(true);
-                calculateTotalStock(carsOnSale, MAX_MODEL);
+                carsOnSaleList(true); // show full list with stock numbers
+                calculateTotalStock(carsOnSale, MAX_MODEL); // recalculate and display total stock
 
                 break;
 
             case MENU_OPTION_BUY_CAR:
 
+                // If there are no cars in stock, show message and go back to menu
                 if (statistics.carsInStock == 0)
                 {
                     printf("\nSorry, %s all cars are sold out at the moment!\n", currentCustomer.currentCustomerName);
                     printf("Please check back later when we restock.\n");
                     break; // goes back to menu
                 }
+                // most expensive appears first
                 sortDescending(carsOnSale, countCarModels(carsOnSale, MAX_MODEL), SORT_PRICE);
 
-                carsOnSaleList(false);
+                carsOnSaleList(false); // show available/sold status
 
                 printf("\nTotal cars in stock      : %hu\n", statistics.carsInStock);
                 printf("Models currently on sale : %hu\n", countCarModels(carsOnSale, MAX_MODEL));
@@ -640,20 +663,22 @@ int main(void)
 
                 unsigned short selectedId = carIdValidation(carsOnSale, MAX_MODEL, &currentCustomer);
 
-                unsigned short index = selectedId - 1; // array index starts from 0, so we subtract 1
-                printf("You have selected: %s, %hu\n", carsOnSale[index].carModel, carsOnSale[index].carYear);
+                unsigned short index = selectedId - 1; // array index starts from 0, so subtract 1
+                printf("You have selected: %s, %hu\n", carsOnSale[index].carModelName, carsOnSale[index].carModelYear);
 
                 printf("\nHow old are you %s? Age: ", currentCustomer.currentCustomerName);
 
+                // validate age
                 captureValueAndValidate(&currentCustomer.currentCustomerAge, 1, 99);
 
                 if (currentCustomer.currentCustomerAge < 18)
                 {
                     printf("\nSorry %s, you must be at least 18 years old to buy a car.\n",
                            currentCustomer.currentCustomerName);
-                    menuOption = MENU_OPTION_EXIT; // eger exit olmazsa, yasi kucuk kullanici sistemde kalir
+                    // if we do not exit the menu, underage user would remain in the system
+                    menuOption = MENU_OPTION_EXIT;
                     saveDataToFile();
-                    break; // exits switch, goes back to do while
+                    break; // exit this case and go back to menu loop
                 }
 
 
@@ -673,24 +698,24 @@ int main(void)
                     currentCustomer.currentCustomerIsMember = false;
                 }
 
-                //local variables
+                //local variables for discount
                 float currentTotalPrice;
                 bool ageDiscountApplied = false;
                 bool membershipDiscountApplied = currentCustomer.currentCustomerIsMember;
 
-                currentTotalPrice = carsOnSale[index].carPrice; // original car price
+                currentTotalPrice = carsOnSale[index].carPrice; // start with original car price
 
-                //check discount and update and sale statistics
+                // check age discount and update statistics
                 if (currentCustomer.currentCustomerAge >= DISCOUNT_MIN_AGE && currentCustomer.currentCustomerAge <=
                     DISCOUNT_MAX_AGE)
                 {
                     ageDiscountApplied = true;
                     printf("Great news %s, You get a 20%% age discount.\n", currentCustomer.currentCustomerName);
-                    currentTotalPrice *= DISCOUNT_20; // gives %20 by = *0.8
+                    currentTotalPrice *= DISCOUNT_20;
                     if (currentCustomer.currentCustomerIsMember == true)
                     {
                         printf("Plus, your Chelebi Garage membership gives you an extra 10%% discount.\n");
-                        currentTotalPrice *= EXTRA10; // gives extra %10 = *0.9
+                        currentTotalPrice *= EXTRA10;
                     }
                     printf("Final price after discounts: %.2f GBP\n", currentTotalPrice);
                 }
@@ -699,7 +724,7 @@ int main(void)
                 {
                     printf("Thank you for being a Chelebi Garage member, %s.\n", currentCustomer.currentCustomerName);
                     printf("\nYou get a 10%% membership discount on your purchase.\n");
-                    currentTotalPrice *= EXTRA10;
+                    currentTotalPrice *= EXTRA10; // membership discount only
                     printf("\nFinal price after membership discount: %.2f GBP\n", currentTotalPrice);
                 }
 
@@ -709,6 +734,7 @@ int main(void)
                     printf("Total price: %.2f GBP\n", currentTotalPrice);
                 }
 
+                // apply sale to statistics and save the sale details
                 updateStatisticsAfterSale(&statistics, carsOnSale, index, &currentCustomer, currentTotalPrice,
                                           ageDiscountApplied, membershipDiscountApplied);
 
@@ -717,7 +743,6 @@ int main(void)
                 customersFeedbackRating();
 
                 captureValueAndValidate(&statistics.sales[statistics.numberOfSales - 1].customerFeedbackRating, 1, 5);
-
 
                 getCustomerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
 
@@ -749,7 +774,9 @@ int main(void)
                     Sale s = statistics.sales[i];
 
                     char timeOnSale[20];
+                    // convert timestamp to local time structure
                     struct tm* localTime = localtime(&s.saleDate);
+                    // format date/time
                     strftime(timeOnSale, sizeof(timeOnSale), "%d/%m/%Y %H:%M:%S", localTime);
 
                     printf("%-3hu %-15s %-5hu %-18s %-6hu %-18s %-12.2f %-12.2f %-20s\n",
@@ -782,57 +809,61 @@ int main(void)
                 unsigned short units[MAX_MODEL] = {0};
                 float revenue[MAX_MODEL] = {0.0f};
 
+                // count how many units sold and revenue for each model/year
                 for (unsigned short i = 0; i < modelCount; i++)
                 {
                     for (unsigned short s = 0; s < statistics.numberOfSales; s++)
                     {
                         Sale* sale = &statistics.sales[s];
 
-                        // if model and year matches
-                        if (strcmp(sale->carModel, carsOnSale[i].carModel) == 0 &&
-                            sale->carYear == carsOnSale[i].carYear)
+                        // if model and year match, add this sale to that model's totals
+                        if (strcmp(sale->carModel, carsOnSale[i].carModelName) == 0 &&
+                            sale->carYear == carsOnSale[i].carModelYear)
                         {
                             units[i]++;
                             revenue[i] += sale->finalPrice;
                         }
                     }
                 }
+
+                    // Sort models by revenue in descending order
                     for (unsigned short i = 0; i < modelCount -1; i++)
                     {
                         for (unsigned short j = i + 1; j < modelCount; j++)
                         {
                             if (revenue[i] < revenue[j])
                             {
-                                // revenue swap
+                                // revenue swap to keep highest revenue first
                                 float tempR = revenue[i];
                                 revenue[i] = revenue[j];
                                 revenue[j] = tempR;
 
-                                // units swap
+                                // units swap to stay in sync with revenue and carsOnSale
                                 unsigned short tempU = units[i];
                                 units[i] = units[j];
                                 units[j] = tempU;
 
-                                // carsOnSale swap
+                                // carsOnSale swap so model/year stays aligned with units and revenue
                                 Car tempC = carsOnSale[i];
                                 carsOnSale[i] = carsOnSale[j];
                                 carsOnSale[j] = tempC;
                             }
                         }
                     }
+
+                    // Print only models that have at least one unit sold
                     for (unsigned short i = 0; i < modelCount; i++)
                     {
                         if (units[i] == 0)
                             continue;
 
                         printf("%-20s %-6hu %-12hu %-12.2f\n",
-                           carsOnSale[i].carModel,
-                           carsOnSale[i].carYear,
+                           carsOnSale[i].carModelName,
+                           carsOnSale[i].carModelYear,
                            units[i],
                            revenue[i]);
                     }
-                printf(
-                    "---------------------------------------------------------------------------------------------------------------\n");
+                printf("-------------------------------------------------------------\n");
                 break;
             }
 
@@ -840,12 +871,13 @@ int main(void)
                        ? "\n\nPress Enter ..."
                        : "\n\nPress Enter to return to the Menu...");
 
-            saveDataToFile();
-            getchar(); // waits an entry from user
+            saveDataToFile(); // save current statistics to file after each main action
+            getchar(); // wait for user to press Enter
             clearScreen();
         }
-        while (menuOption != MENU_OPTION_EXIT);
         // loop continues while option is NOT EXIT (4). If user choose EXIT, loop stops.
+        while (menuOption != MENU_OPTION_EXIT);
+
         printf("\nDo you wish to quit? (Y/N): ");
         char quitChoice;
         scanf(" %c", &quitChoice);
@@ -854,7 +886,7 @@ int main(void)
         quitChoice = toupper(quitChoice);
         if (quitChoice == 'Y')
         {
-            break;
+            break; // exit outer loop and end program
         }
 
         clearScreen();
