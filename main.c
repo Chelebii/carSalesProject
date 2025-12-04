@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <time.h> //localtime function
 
-#define DISCOUNT_MIN_AGE 20
+#define DISCOUNT_MIN_AGE 22
 #define DISCOUNT_MAX_AGE 25
 #define EXTRA10 0.9f
 #define DISCOUNT_20 0.8f
@@ -13,7 +13,7 @@
 #define MENU_OPTION_BUY_CAR 2
 #define MENU_OPTION_SALE_STATS 3
 #define MENU_OPTION_EXIT 4
-#define MAX_MODEL 100 // maximum number of car models and also max stored sales
+#define MAX_MODEL 100// maximum number of car models and also max stored sales
 #define CAR_WANTED 1
 // File
 #define CSV_FILE "salesData.csv"
@@ -36,6 +36,8 @@ typedef struct
     bool currentCustomerIsMember;
 } Customer; // represents current active user
 
+Customer currentCustomer = {0};
+
 typedef struct
 {
     char customerName[101];
@@ -50,7 +52,6 @@ typedef struct
     char customerFeedback[201];
 } Sale; // represents a single completed sale (used for statistics)
 
-Customer currentCustomer = {0};
 
 typedef struct
 {
@@ -58,8 +59,8 @@ typedef struct
     unsigned short numberOfSales;
     float totalIncome; // total income from all sales
     float totalDiscountGiven;
-    Sale sales[MAX_MODEL]; // array storing individual sales (up to MAX_MODEL)
-} Statistics;
+    Sale sales[MAX_MODEL]; // array storing each completed sale record
+} Statistics; // represents all sales
 
 Statistics statistics = {0};
 
@@ -86,6 +87,7 @@ Car carsOnSale[MAX_MODEL] = {
     //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
 };
 
+// enam used to give names to constant numbers
 typedef enum
 {
     SORT_PRICE,
@@ -113,11 +115,12 @@ void openFile(char* fileName, char* mode)
     {
         if (createFile(fileName) == NULL) // will try to create file and if unsuccesuful == NULL
         {
+            printf("There was an error trying to create the file %s.", fileName);
             fileStatus = FILE_ERROR;
         }
         else
         {
-            openFile(fileName, mode); // if file created, function calling itself (recursive)
+            openFile(fileName, mode); // if file created, function calling itself to retry opening (recursive)
         }
     }
     else
@@ -126,7 +129,7 @@ void openFile(char* fileName, char* mode)
     }
 }
 
-// if the file is open, this function closes it. if it is not open, it does nothing.
+// if the file is open, this function closes it.
 void closeFile()
 {
     if (fileStatus == FILE_OPENED)
@@ -140,7 +143,7 @@ void closeFile()
 void readDataFromFile(Statistics* stats)
 {
     int lineCounter = 0; // counts how many sales have been read from the file
-    stats->numberOfSales = 0;
+    stats->numberOfSales = 0; // reset count so we rebuild it from the file data
     stats->totalIncome = 0.0f;
     stats->totalDiscountGiven = 0.0f;
 
@@ -158,7 +161,7 @@ void readDataFromFile(Statistics* stats)
         // used long long to read timestamp correctly.
         long long saleDate = 0;
 
-        //  "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space
+        //  "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space, '^' exclude
         int scanResult = fscanf(
             file,
             " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %lld %hu \"%200[^\"]\"",
@@ -186,6 +189,13 @@ void readDataFromFile(Statistics* stats)
         stats->totalIncome += sale->finalPrice;
         stats->totalDiscountGiven += sale->discountAmount;
 
+        /*int carIndex = findCarByModelAndYear(carsOnSale, MAX_MODEL, sale->carModel, sale->carYear);
+        if (carIndex >= 0 && carsOnSale[carIndex]carStock > 0)
+        {
+            carsOnSale[carIndex].carStock--;
+            stats->carsInStock--;
+        }*/
+
         lineCounter++;// Move to the next sale
     }
     // After reading all lines, store how many sales successfully read
@@ -203,13 +213,11 @@ void getDataFromFile()
     else if (fileStatus == FILE_ERROR)
     {
         printf("There was an error trying to read from the file %s.", CSV_FILE);
-        getchar();
-        getchar();
     }
     closeFile();
 }
 
-// Writes all sales from the 'statistics' variable into the opened FILE *file.
+// Writes all sales from the 'statistics' variable into the FILE
 void writeDataToFile()
 {
     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
@@ -245,7 +253,6 @@ void saveDataToFile()
         getchar();
         getchar();
     }
-
     closeFile();
 }
 
@@ -255,7 +262,7 @@ unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
     unsigned short count = 0;
     for (unsigned short i = 0; i < capacity; i++)
     {
-        if (carsOnSale[i].carModelName[0] != '\0')
+        if (carsOnSale[i].carModelName[0] != '\0') // if the first character is null. there is no carModel exists
         {
             count++;
         }
@@ -288,11 +295,11 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
 
     unsigned short s = stats->numberOfSales; // index where for storing the new sale
 
-    // copy customer information into the new sale entry
+    // copy temporary customer information into the new sale entry(permanent for record)
     strcpy(stats->sales[s].customerName, c->currentCustomerName);
     stats->sales[s].customerAge = c->currentCustomerAge;
 
-    // copy car information into the new sale entry
+    // copy the selected car's model name into this sale record (which car was sold)
     strcpy(stats->sales[s].carModel, carsOnSale[index].carModelName);
     stats->sales[s].carYear = carsOnSale[index].carModelYear;
     stats->sales[s].finalPrice = currentTotalPrice;
@@ -315,7 +322,8 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
         strcpy(stats->sales[s].discountType, "Membership");
     }
 
-    time(&stats->sales[s].saleDate);// storing the current time for this sale
+    // store the current system time into saleDate for this Sale (when the sale happened)
+    time(&stats->sales[s].saleDate);
 
 
     stats->numberOfSales++; // increase number of sales after each successful sale
@@ -325,8 +333,7 @@ int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model
 {
     for (unsigned short i = 0; i < capacity; i++)
     {
-        if (carsOnsale[i].carModelName[0] != '\0' && carsOnsale[i].carModelYear == year && strcmp(carsOnsale[i].carModelName, model)
-            == 0)
+        if (carsOnsale[i].carModelName[0] != '\0' && carsOnsale[i].carModelYear == year && strcmp(carsOnsale[i].carModelName, model)== 0)
         {
             return i; // return index of matching car
         }
@@ -397,7 +404,8 @@ void nameValidation(Customer* c)
         validName = true; // assume name is valid initially
         for (int i = 0; c->currentCustomerName[i]; i++)
         {
-            if (!isalpha(c->currentCustomerName[i]) && c->currentCustomerName[i] != ' ')
+            // if this character is not a letter and not a space, then it is invalid.
+            if (isalpha(c->currentCustomerName[i]) == 0 && c->currentCustomerName[i] != ' ')
             {
                 showBanner();
                 printf("Please enter a valid name using letters only: ");
@@ -422,7 +430,7 @@ void nameToUpperCase(char* name)
 }
 
 // Validates selected car ID by checking range and availability
-unsigned short carIdValidation(Car carsOnSale[], unsigned short capacity, Customer* customer)
+unsigned short carIdValidation(Car carsOnSale[], Customer* customer)
 {
     unsigned short selectedId = 0;
     bool validChoice = false;
@@ -661,7 +669,7 @@ int main(void)
 
                 printf("\nWhich car would you like to buy %s? ", currentCustomer.currentCustomerName);
 
-                unsigned short selectedId = carIdValidation(carsOnSale, MAX_MODEL, &currentCustomer);
+                unsigned short selectedId = carIdValidation(carsOnSale, &currentCustomer);
 
                 unsigned short index = selectedId - 1; // array index starts from 0, so subtract 1
                 printf("You have selected: %s, %hu\n", carsOnSale[index].carModelName, carsOnSale[index].carModelYear);
