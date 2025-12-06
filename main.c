@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h> // toupper(), tolower(), isAlpha
 #include <stdbool.h>
-#include <time.h> //localtime function
+#include <time.h> // localtime function
 
 #define DISCOUNT_MIN_AGE 22
 #define DISCOUNT_MAX_AGE 25
@@ -13,7 +13,7 @@
 #define MENU_OPTION_BUY_CAR 2
 #define MENU_OPTION_SALE_STATS 3
 #define MENU_OPTION_EXIT 4
-#define MAX_MODEL 100// maximum number of car models and also max stored sales
+#define MAX_MODEL 100 // maximum number of car models and also max stored sales
 #define CAR_WANTED 1
 // File
 #define CSV_FILE "salesData.csv"
@@ -46,10 +46,10 @@ typedef struct
     unsigned short carYear;
     float finalPrice; // final price after discounts
     float discountAmount;
-    char discountType[51]; // "No_discount", "Age", "Membership", "Age_And_Membership"
+    char discountType[51]; // No_discount, Age, Membership, Age_And_Membership
     time_t saleDate;
-    unsigned short customerFeedbackRating; // 1 to 5
-    char customerFeedback[201];
+    unsigned short askForFeedbackRating; // 1 to 5
+    char askForCustomerFeedback[201];
 } Sale; // represents a single completed sale (used for statistics)
 
 
@@ -87,7 +87,7 @@ Car carsOnSale[MAX_MODEL] = {
     //{.carModel = "Abc", .carYear = 2016, .carPrice = 10000, .carStock = 10}
 };
 
-// enam used to give names to constant numbers
+// enam used to give names for sorting
 typedef enum
 {
     SORT_PRICE,
@@ -106,7 +106,7 @@ FILE* createFile(char* fileName)
     return file; // return NULL if creation failed, non NULL if success
 }
 
-// Tries to open the file, creates it if needed, then retries opening.
+// Tries to open file, creates it if needed, then retries opening.
 void openFile(char* fileName, char* mode)
 {
     file = fopen(fileName, mode); // first try to open as normal
@@ -129,7 +129,7 @@ void openFile(char* fileName, char* mode)
     }
 }
 
-// if the file is open, this function closes it.
+
 void closeFile()
 {
     if (fileStatus == FILE_OPENED)
@@ -139,7 +139,6 @@ void closeFile()
     }
 }
 
-// reads all sales data from the already opened global FILE *file into Statistics and recalculates
 void readDataFromFile(Statistics* stats)
 {
     int lineCounter = 0; // counts how many sales have been read from the file
@@ -149,7 +148,7 @@ void readDataFromFile(Statistics* stats)
 
     while (1)
     {
-        if (lineCounter >= MAX_MODEL) // Prevents reading more lines
+        if (lineCounter >= MAX_MODEL) // prevents reading more lines
         {
             printf("Maximum number of sales reached. No more sales can be recorded.\n");
             break;
@@ -158,10 +157,10 @@ void readDataFromFile(Statistics* stats)
         // Pointer to the next Sale slot inside the Statistics struct
         Sale* sale = &stats->sales[lineCounter];
 
-        // used long long to read timestamp correctly.
+        // used long long to read timestamp correctly
         long long saleDate = 0;
 
-        //  "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space, '^' exclude
+        // "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space
         int scanResult = fscanf(
             file,
             " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %lld %hu \"%200[^\"]\"",
@@ -173,8 +172,8 @@ void readDataFromFile(Statistics* stats)
             &sale->discountAmount,
             sale->discountType,
             &saleDate,
-            &sale->customerFeedbackRating,
-            sale->customerFeedback
+            &sale->askForFeedbackRating,
+            sale->askForCustomerFeedback
         );
         // If reached end of file or there was an error it stops reading
         if (scanResult == EOF)
@@ -202,7 +201,7 @@ void readDataFromFile(Statistics* stats)
     stats->numberOfSales = lineCounter;
 }
 
-// Opens the CSV file in read mode and loads sales data into statistics
+// opens the CSV file in read mode and loads sales data into statistics
 void getDataFromFile()
 {
     openFile(CSV_FILE, "r");
@@ -217,7 +216,7 @@ void getDataFromFile()
     closeFile();
 }
 
-// Writes all sales from the 'statistics' variable into the FILE
+// Writes all sales from the statistics variable into the file
 void writeDataToFile()
 {
     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
@@ -232,13 +231,13 @@ void writeDataToFile()
                 sale->discountAmount,
                 sale->discountType,
                 (long long)sale->saleDate,// time_t on this system is implemented as long long.
-                sale->customerFeedbackRating,
-                sale->customerFeedback
+                sale->askForFeedbackRating,
+                sale->askForCustomerFeedback
         );
     }
 }
 
-// Opens file in write mode and saves current statistics to memory
+// opens file in write mode and saves current statistics to hard disk
 void saveDataToFile()
 {
     openFile(CSV_FILE, "w");
@@ -256,7 +255,7 @@ void saveDataToFile()
     closeFile();
 }
 
-// Counts how many car models are actually in use
+// counts how many car models are actually in use
 unsigned short countCarModels(Car carsOnSale[], unsigned short capacity)
 {
     unsigned short count = 0;
@@ -355,7 +354,7 @@ void clearBuffer(void)
 void carsOnSaleList(bool showSoldCars)
 {
     printf("\n===================== CARS ON SALE =====================\n\n");
-    printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Status");
+    printf("%-3s  %-20s  %-6s  %-10s  %-10s\n", "ID", "Model", "Year", "Price", "Stock");
     printf("-----------------------------------------------------------\n");
     for (unsigned short i = 0; i < MAX_MODEL; i++)
         if (carsOnSale[i].carModelName[0] != '\0')
@@ -429,7 +428,7 @@ void nameToUpperCase(char* name)
     }
 }
 
-// Validates selected car ID by checking range and availability
+// validates selected car ID by checking range and availability
 unsigned short carIdValidation(Car carsOnSale[], Customer* customer)
 {
     unsigned short selectedId = 0;
@@ -448,7 +447,7 @@ unsigned short carIdValidation(Car carsOnSale[], Customer* customer)
             continue; // goes to the start of the loop, skips rest
         }
 
-        //Check if that car is already sold
+        // check if that car is already sold
         if (carsOnSale[selectedId - 1].carStock == 0)
         {
             printf("\nSorry, %s, this car is already sold!\n", customer->currentCustomerName);
@@ -557,8 +556,8 @@ void getCustomerFeedback(Sale* saleFeedback)
 {
     printf("Please write a short comment or press Enter to skip:\n");
 
-    //Reads a full line including spaces and prevents buffer overflow.
-    fgets(saleFeedback->customerFeedback, sizeof(saleFeedback->customerFeedback), stdin);
+    // reads a full line including spaces and prevents buffer overflow.
+    fgets(saleFeedback->askForCustomerFeedback, sizeof(saleFeedback->askForCustomerFeedback), stdin);
 
     printf("\nThank you for your feedback!\n");
 }
@@ -652,7 +651,7 @@ int main(void)
 
             case MENU_OPTION_BUY_CAR:
 
-                // If there are no cars in stock, show message and go back to menu
+                // if there are no cars in stock, show message and go back to menu
                 if (statistics.carsInStock == 0)
                 {
                     printf("\nSorry, %s all cars are sold out at the moment!\n", currentCustomer.currentCustomerName);
@@ -750,7 +749,7 @@ int main(void)
 
                 customersFeedbackRating();
 
-                captureValueAndValidate(&statistics.sales[statistics.numberOfSales - 1].customerFeedbackRating, 1, 5);
+                captureValueAndValidate(&statistics.sales[statistics.numberOfSales - 1].askForFeedbackRating, 1, 5);
 
                 getCustomerFeedback(&statistics.sales[statistics.numberOfSales - 1]);
 
@@ -797,9 +796,9 @@ int main(void)
                            s.discountAmount,
                            s.finalPrice,
                            timeOnSale);
-                    printf("    Rating : %hu/5\n", s.customerFeedbackRating);
-                    if (strlen(s.customerFeedback) > 1) // checks if there is a comment other than just newline
-                        printf("    Comment: %s", s.customerFeedback);
+                    printf("    Rating : %hu/5\n", s.askForFeedbackRating);
+                    if (strlen(s.askForCustomerFeedback) > 1) // checks if there is a comment other than just newline
+                        printf("    Comment: %s", s.askForCustomerFeedback);
                     else
                         printf("    Comment: (no comment)\n");
 
@@ -834,7 +833,7 @@ int main(void)
                     }
                 }
 
-                    // Sort models by revenue in descending order
+                    // sort models by revenue in descending order
                     for (unsigned short i = 0; i < modelCount -1; i++)
                     {
                         for (unsigned short j = i + 1; j < modelCount; j++)
@@ -859,7 +858,7 @@ int main(void)
                         }
                     }
 
-                    // Print only models that have at least one unit sold
+                    // print only models that have at least one unit sold
                     for (unsigned short i = 0; i < modelCount; i++)
                     {
                         if (units[i] == 0)
