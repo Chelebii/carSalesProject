@@ -95,6 +95,19 @@ typedef enum
     SORT_STOCK
 } SortType;
 
+
+int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model, unsigned short year)
+{
+    for (unsigned short i = 0; i < capacity; i++)
+    {
+        if (carsOnsale[i].carModelName[0] != '\0' && carsOnsale[i].carModelYear == year && strcmp(carsOnsale[i].carModelName, model)== 0)
+        {
+            return i; // return index of matching car
+        }
+    }
+    return -1; // means not found. No array ever has index (-1)
+}
+
 FILE* createFile(char* fileName)
 {
     file = fopen(fileName, "w"); // creates the file or resets it if it is already exists
@@ -146,8 +159,12 @@ void readDataFromFile(Statistics* stats)
     stats->totalIncome = 0.0f;
     stats->totalDiscountGiven = 0.0f;
 
+    char header[301];
+    fgets(header, sizeof(header), file);
+
     while (1)
     {
+
         if (lineCounter >= MAX_MODEL) // prevents reading more lines
         {
             printf("Maximum number of sales reached. No more sales can be recorded.\n");
@@ -163,7 +180,7 @@ void readDataFromFile(Statistics* stats)
         // "%100[^\"]" read up to 100 characters until a quote, %50s read up to 50 chars without space
         int scanResult = fscanf(
             file,
-            " \"%100[^\"]\" %hu \"%100[^\"]\" %hu %f %f %50s %lld %hu \"%200[^\"]\"",
+            " \"%100[^\"]\",%hu,\"%100[^\"]\",%hu,%f,%f,\"%50[^\"]\",%lld,%hu,\"%200[^\"]\"",
             sale->customerName,
             &sale->customerAge,
             sale->carModel,
@@ -175,8 +192,9 @@ void readDataFromFile(Statistics* stats)
             &sale->askForFeedbackRating,
             sale->askForCustomerFeedback
         );
-        // If reached end of file or there was an error it stops reading
-        if (scanResult == EOF)
+
+        // Must read all 10 fields, otherwise stop
+        if (scanResult != 10)
         {
             break;
         }
@@ -188,12 +206,11 @@ void readDataFromFile(Statistics* stats)
         stats->totalIncome += sale->finalPrice;
         stats->totalDiscountGiven += sale->discountAmount;
 
-        /*int carIndex = findCarByModelAndYear(carsOnSale, MAX_MODEL, sale->carModel, sale->carYear);
-        if (carIndex >= 0 && carsOnSale[carIndex]carStock > 0)
+        int carIndex = findCarByModelAndYear(carsOnSale, MAX_MODEL, sale->carModel, sale->carYear);
+        if (carIndex >= 0 && carsOnSale[carIndex].carStock > 0)
         {
             carsOnSale[carIndex].carStock--;
-            stats->carsInStock--;
-        }*/
+        }
 
         lineCounter++;// Move to the next sale
     }
@@ -219,10 +236,12 @@ void getDataFromFile()
 // Writes all sales from the statistics variable into the file
 void writeDataToFile()
 {
+    fprintf(file, "Customer Name,Age,Car Model,Car Year,Final Price,Discount Amount,Discount Type,Sale Date,Feedback Rating,Customer Feedback\n");
+
     for (unsigned short i = 0; i < statistics.numberOfSales; i++)
     {
         Sale* sale = &statistics.sales[i];
-        fprintf(file, "\"%s\" %hu \"%s\" %hu %.2f %.2f %s %lld %hu \"%s\"\n",
+        fprintf(file, "\"%s\",%hu,\"%s\",%hu,%.2f,%.2f,\"%s\",%lld,%hu,\"%s\"\n",
                 sale->customerName,
                 sale->customerAge,
                 sale->carModel,
@@ -328,17 +347,6 @@ void updateStatisticsAfterSale(Statistics* stats, Car carsOnSale[], unsigned sho
     stats->numberOfSales++; // increase number of sales after each successful sale
 }
 
-int findCarByModelAndYear(Car carsOnsale[], unsigned short capacity, char* model, unsigned short year)
-{
-    for (unsigned short i = 0; i < capacity; i++)
-    {
-        if (carsOnsale[i].carModelName[0] != '\0' && carsOnsale[i].carModelYear == year && strcmp(carsOnsale[i].carModelName, model)== 0)
-        {
-            return i; // return index of matching car
-        }
-    }
-    return -1; // means not found. No array ever has index (-1)
-}
 
 void clearScreen(void)
 {
